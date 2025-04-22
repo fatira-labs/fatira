@@ -1,14 +1,14 @@
 use anchor_lang::prelude::*;
 
-const MAX_USER_USERNAME = 20;
-const MAX_USER_GROUPS = 20;
+const MAX_USER_USERNAME: usize = 20;
+const MAX_USER_GROUPS: usize = 20;
 
-const MAX_GROUP_NAME = 50;
-const MAX_GROUP_USERS = 50;
+const MAX_GROUP_NAME: usize = 50;
+const MAX_GROUP_USERS: usize = 50;
 
-const MAX_EXPENSE_NAME = 50;
-const MAX_EXPENSE_DESCRIPTION = 200;
-const MAX_EXPENSE_URL = 200;
+const MAX_EXPENSE_NAME: usize = 50;
+const MAX_EXPENSE_DESCRIPTION: usize = 200;
+const MAX_EXPENSE_URL: usize = 200;
 
 #[account]
 pub struct User {
@@ -17,6 +17,7 @@ pub struct User {
 	pub username: [u8; MAX_USER_USERNAME],
 	pub groups_size: u8,
 	pub groups: [Pubkey; MAX_USER_GROUPS],
+	pub bump: u8,
 }
 
 #[account]
@@ -43,5 +44,5 @@ pub struct Expense {
 	pub payee: Pubkey,
 	pub payers_size: u8,
 	pub payers: [Pubkey; MAX_GROUP_USERS],
-	pub amounts: [Pubkey; MAX_GROUP_USERS]
+	pub amounts: [u64; MAX_GROUP_USERS]
 }
