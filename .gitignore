@@ -34,3 +34,10 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# anchor
+.anchor
+target
+**/*.rs.bk
+test-ledger
+.yarn
