@@ -11,6 +11,7 @@ const MAX_EXPENSE_DESCRIPTION: usize = 200;
 const MAX_EXPENSE_URL: usize = 200;
 
 #[account]
+#[derive(InitSpace)]
 pub struct User {
 	pub owner: Pubkey,
 	pub username_size: u8,
@@ -21,6 +22,7 @@ pub struct User {
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct Group {
 	pub name_size: u8,
 	pub name: [u8; MAX_GROUP_NAME],
@@ -32,6 +34,7 @@ pub struct Group {
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct Expense {
 	pub group: Pubkey,
 	pub name_size: u8,
