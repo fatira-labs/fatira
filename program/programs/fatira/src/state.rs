@@ -32,20 +32,3 @@ pub struct Group {
 	pub users: [Pubkey; MAX_GROUP_USERS],
 	pub balances: [i64; MAX_GROUP_USERS],
 }
-
-#[account]
-#[derive(InitSpace)]
-pub struct Expense {
-	pub group: Pubkey,
-	pub name_size: u8,
-	pub name: [u8; MAX_EXPENSE_NAME],
-	pub description_size: u8,
-	pub description: [u8; MAX_EXPENSE_DESCRIPTION],
-	pub url_size: u8,
-	pub url: [u8; MAX_EXPENSE_URL],
-	pub total_cost: u64,
-	pub payee: Pubkey,
-	pub payers_size: u8,
-	pub payers: [Pubkey; MAX_GROUP_USERS],
-	pub amounts: [u64; MAX_GROUP_USERS]
-}

@@ -36,13 +36,7 @@ pub struct Initialize<'info> {
         space = DISCRIMINATOR_SIZE + Group::INIT_SPACE,
     )]
     pub group: Account<'info, Group>,
-
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = DISCRIMINATOR_SIZE + Expense::INIT_SPACE,
-    )]
-    pub expense: Account<'info, Expense>,
+    
     pub system_program: Program<'info, System>,
 
 }
