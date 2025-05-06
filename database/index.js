@@ -1,9 +1,9 @@
 import mongoose from 'mongoose'
+import dotenv from 'dotenv';
+dotenv.config();
 
-const mongoose = require('mongoose');
-const User = require('./User');
-const Expense = require('./Expense');
 
-const mongoDB = 'mongodb://localhost:27017/fatiraDB';
-mongoose.connect(mongoDB);
-
+main().catch((err) => console.log(err));
+async function main() {
+  await mongoose.connect(process.env.MONGO_URI);
+}

@@ -1,11 +1,15 @@
-const mongoose = require('mongoose');
+import mongoose, { Schema, model, Decimal128 } from 'mongoose'
+import User from './User.js'
 
-new expense = mongoose.Schema({
-    group: String,
-    name: String,
+const Expense = new Schema({
+    group: String, // group id
+    name: String, 
     description: String,
-    total_cost: Number,
-    payee: User,
-    payers: [User],
-    amounts: [Number],
+    totalCost: Decimal128,
+    payee: String, // user address
+    payers: [String],
+    amounts: [Decimal128],
 });
+
+const Expenses = new model('Expense', Expense);
+export default Expense;
