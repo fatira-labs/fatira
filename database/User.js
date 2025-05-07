@@ -1,18 +1,18 @@
-import mongoose, { Schema, model } from 'mongoose'
+import { Schema, model } from 'mongoose'
 
-const UserSchema = new Schema({
+const userSchema = new Schema({
     owner: String, // address
     name: String,
     username: String,
     groups: [String], // group ids
 });
-UserSchema.methods.addGroup = function addGroup(groupId) {
+userSchema.methods.addGroup = function addGroup(groupId) {
     if (!this.groups.includes(groupId)) {
         this.groups.push(groupId);
         // send onchain transaction to add user to group 
     }
 }
-UserSchema.methods.removeGroup = function removeGroup(groupId) {
+userSchema.methods.removeGroup = function removeGroup(groupId) {
     const index = this.groups.indexOf(groupId);
     if (index > -1) {
         // check if balance is 0
@@ -20,5 +20,5 @@ UserSchema.methods.removeGroup = function removeGroup(groupId) {
     }
 }
 
-const Users = model('Users', UserSchema);
-export default Users;
+const User = model('User', userSchema);
+export default User;

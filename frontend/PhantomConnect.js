@@ -1,6 +1,6 @@
 // PhantomConnect.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, View, Text, Linking, Alert, Platform, StyleSheet, ActivityIndicator } from 'react-native';
+import { Button, View, Text, Linking, Alert, Platform, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
 import * as ExpoLinking from 'expo-linking';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
@@ -70,6 +70,9 @@ const PhantomConnect = () => {
   const [session, setSession] = useState(null);
   const [userPublicKey, setUserPublicKey] = useState(null); // Store as string for display
   const [status, setStatus] = useState('Initializing'); // Initializing | Disconnected | Connecting | Connected | Error
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Effect to load or generate keypair on mount
   useEffect(() => {
@@ -249,6 +252,43 @@ const PhantomConnect = () => {
       setStatus('Disconnected'); // Reset status on error
     }
   }, [dappKeyPair, status]); // Dependencies for the handler
+
+  const handleSignup = async () => {
+    if (!name.trim() || !username.trim()) {
+      Alert.alert('Error', 'Name and username are required');
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      // route to backend
+      const response = await fetch('http://localhost:3000/api/users/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          owner: userPublicKey,
+          name: name.trim(),
+          username: username.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create user');
+      }
+
+      Alert.alert('Success', 'Account created successfully!');
+      setName('');
+      setUsername('');
+    } catch (error) {
+      console.error('Error in signup:', error);
+      Alert.alert('Error', 'Failed to create account');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
 
 
   // --- Deep Link Listeners ---
