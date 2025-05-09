@@ -262,7 +262,7 @@ const PhantomConnect = () => {
     setIsRegistering(true);
     try {
       // route to backend
-      const response = await fetch('http://localhost:3000/api/users/signup', {
+      const response = await fetch('http://10.0.0.125:3000/api/users/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -325,14 +325,31 @@ const PhantomConnect = () => {
       </View>
       <Text style={styles.statusText}>Status: {status}</Text>
       {userPublicKey && status === 'Connected' && (
-        <Text style={styles.infoText}>
+        <><Text style={styles.infoText}>
           Wallet PubKey: {userPublicKey.slice(0, 8)}...{userPublicKey.slice(-4)}
-        </Text>
+        </Text><View style={styles.formContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              editable={!isRegistering} />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+              editable={!isRegistering} />
+            <Button
+              title={isRegistering ? 'Signing up...' : 'Sign Up'}
+              onPress={handleSignup}
+              disabled={isRegistering} />
+          </View></>
       )}
        {session && status === 'Connected' && (
-        <Text style={styles.infoTextSmall}>
+        <><Text style={styles.infoTextSmall}>
           Session Token: {session.slice(0, 10)}...
-        </Text>
+        </Text></>
       )}
        {status === 'Error' && (
            <Text style={styles.errorText}>An initialization error occurred. Please restart the app.</Text>
@@ -341,6 +358,9 @@ const PhantomConnect = () => {
       {/* <Text style={{fontSize: 10, color: 'grey', marginTop: 15}}>
             Redirect URL: {dappKeyPair ? ExpoLinking.createURL('onconnect') : 'Initializing...'}
       </Text> */}
+      {status === 'Error' && (
+        <Text style={styles.errorText}>An error occurred. Please restart the app.</Text>
+      )}
     </View>
   );
 };
@@ -382,6 +402,19 @@ const styles = StyleSheet.create({
         marginTop: 10,
         color: 'red',
         textAlign: 'center',
+    },
+    formContainer: {
+        width: '100%',
+        padding: 20,
+        marginTop: 20,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      marginBottom: 15,
+      width: '100%',
     },
 });
 
