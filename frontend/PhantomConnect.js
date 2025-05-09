@@ -5,6 +5,7 @@ import * as ExpoLinking from 'expo-linking';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import * as SecureStore from 'expo-secure-store';
+import { useNavigation } from '@react-navigation/native';
 
 // Use a unique key for storing the dapp keypair in SecureStore
 const DAPP_KEYPAIR_STORAGE_KEY = 'phantom_dapp_keypair';
@@ -65,6 +66,7 @@ const getOrCreateKeyPair = async () => {
 // --- Component ---
 
 const PhantomConnect = () => {
+  const navigation = useNavigation();
   const [dappKeyPair, setDappKeyPair] = useState(null);
   const [sharedSecret, setSharedSecret] = useState(null);
   const [session, setSession] = useState(null);
@@ -255,13 +257,12 @@ const PhantomConnect = () => {
 
   const handleSignup = async () => {
     if (!name.trim() || !username.trim()) {
-      Alert.alert('Error', 'Name and username are required');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setIsRegistering(true);
     try {
-      // route to backend
       const response = await fetch('http://10.0.0.125:3000/api/users/signup', {
         method: 'POST',
         headers: {
@@ -279,7 +280,14 @@ const PhantomConnect = () => {
         throw new Error(data.message || 'Failed to create user');
       }
 
-      Alert.alert('Success', 'Account created successfully!');
+      Alert.alert('Success', 'Account created successfully!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            navigation.navigate('Home');
+          },
+        },
+      ]);
       setName('');
       setUsername('');
     } catch (error) {
