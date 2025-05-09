@@ -27,16 +27,35 @@ impl Group {
 		Ok(())
 	}
 
-	pub fn get_balance(&mut self, user: Pubkey) -> Option<i64> {
+	pub fn get_balance(&self, user: Pubkey) -> Option<i64> {
 		self.balances.iter().find(|bal| bal.user == user).map(|bal| bal.balance)
 	}
 
 	pub fn remove_balance(&mut self, user: Pubkey) -> Result<()> {
 		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
+			if i == 0 {
+				return Err(error!(ErrorCode::CannotRemoveAdmin))
+			}
 			if self.balances[i].balance != 0 {
 				return Err(error!(ErrorCode::UserBalanceNonZero));
 			}
 			self.balances.remove(i);
+			Ok(())
+		} else {
+			Err(error!(ErrorCode::UserDoesNotExist))
+		}
+	}
+
+	pub fn get_admin(&self) -> Option<Pubkey> {
+		self.balances.first().map(|bal| bal.user)
+	}
+
+	pub fn transfer_admin(&mut self, user: Pubkey) -> Result<()> {
+		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
+			if i == 0 {
+				return Ok(())
+			}
+			self.balances.swap(0, i);
 			Ok(())
 		} else {
 			Err(error!(ErrorCode::UserDoesNotExist))

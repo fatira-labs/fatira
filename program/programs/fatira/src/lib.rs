@@ -16,6 +16,7 @@ pub mod fatira {
         group.currency = currency;
         group.escrow = escrow;
         group.balances = Vec::with_capacity(MAX_GROUP_USERS);
+        group.add_balance(ctx.accounts.signer.key(), 0)?;
         Ok(())
     }
 }

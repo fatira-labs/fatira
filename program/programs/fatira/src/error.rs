@@ -10,4 +10,6 @@ pub enum ErrorCode {
 	UserBalanceNonZero,
 	#[msg("The group has reached maximum capacity")]
 	GroupAtCapacity,
+	#[msg("The admin of the group cannot be removed")]
+	CannotRemoveAdmin,
 }
