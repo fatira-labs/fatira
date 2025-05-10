@@ -11,31 +11,40 @@ import {
   TouchableOpacity,
   StatusBar,
   Dimensions,
-  Linking, // Added
-  Alert,   // Added
-  ActivityIndicator // Added
+  Linking,
+  Alert,
+  ActivityIndicator,
+  Platform,
+  // ScrollView is no longer needed here directly as GroupsScreen handles its own
 } from 'react-native';
 
 // Import Expo and cryptographic libraries
-import * as ExpoLinking from 'expo-linking'; // Added
-import nacl from 'tweetnacl';                 // Added
-import bs58 from 'bs58';                     // Added
-import * as SecureStore from 'expo-secure-store'; // Added
+import * as ExpoLinking from 'expo-linking';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
+import * as SecureStore from 'expo-secure-store';
+
+// Import the new GroupsScreen component
+import GroupsScreen from './GroupsScreen'; // Assuming GroupsScreen.js is in the same directory
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
 // --- Asset Placeholders ---
+// These assets are used by components within App.js or passed as props
 const logoAsset = require('./assets/logologin.png');
 const arrowButtonAsset = require('./assets/backbutton.png');
 const phantomButtonAsset = require('./assets/phantom.png');
+// const topPieAsset = require('./assets/toppie1.png'); // Moved to GroupsScreen.js
+// const plusButtonAsset = require('./assets/pieplus.png'); // Moved to GroupsScreen.js
+
 
 // --- Constants for Phantom Connect ---
-const DAPP_KEYPAIR_STORAGE_KEY = 'phantom_dapp_keypair'; // Key for storing dapp's keypair
-const APP_URL = 'https://yourappname.com'; // Replace with your app's URL (for display in Phantom)
+const DAPP_KEYPAIR_STORAGE_KEY = 'phantom_dapp_keypair';
+const APP_URL = 'https://yourappname.com'; // Replace with your app's URL
 const CLUSTER = 'devnet'; // Or 'mainnet-beta', 'testnet'
 
-// --- Keypair Management (Adapted from PhantomConnect.js) ---
+// --- Keypair Management (No changes) ---
 const generateAndStoreKeyPair = async () => {
   console.log('Generating new dApp keypair...');
   const newKeyPair = nacl.box.keyPair();
@@ -50,7 +59,7 @@ const generateAndStoreKeyPair = async () => {
   } catch (e) {
     console.error("Failed to store dApp keypair securely:", e);
     Alert.alert("Storage Error", "Could not save app keys. Wallet features may not work reliably.");
-    return { publicKey: newKeyPair.publicKey, secretKey: newKeyPair.secretKey }; // Return anyway
+    return { publicKey: newKeyPair.publicKey, secretKey: newKeyPair.secretKey };
   }
 };
 
@@ -77,18 +86,28 @@ const getOrCreateKeyPair = async () => {
 };
 
 
-// --- LoginScreen Component (Remains largely the same) ---
-const LoginScreen = ({ onNavigate, setGlobalUsername }) => {
+// --- SetupUsernameScreen Component (No changes) ---
+const SetupUsernameScreen = ({ onUsernameSubmitted, walletAddress }) => {
   const [usernameInput, setUsernameInput] = useState('');
+
+  const handleSubmit = () => {
+    if (usernameInput.trim()) {
+      onUsernameSubmitted(usernameInput.trim());
+    } else {
+      Alert.alert('Input Required', 'Username cannot be empty.');
+    }
+  };
 
   return (
     <View style={styles.screenContainer}>
-      <Text style={styles.welcomeText}>Welcome to</Text>
       <Image source={logoAsset} style={styles.logo} resizeMode="contain" />
-      <Text style={styles.promptText}>please input your username</Text>
+      <Text style={styles.promptText}>
+        Wallet Connected: <Text style={styles.addressTextSmall}>{walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'N/A'}</Text>
+      </Text>
+      <Text style={styles.promptText}>Please create a username to continue:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder="Enter your username"
         placeholderTextColor="#888"
         value={usernameInput}
         onChangeText={setUsernameInput}
@@ -96,14 +115,7 @@ const LoginScreen = ({ onNavigate, setGlobalUsername }) => {
       />
       <TouchableOpacity
         style={styles.arrowButtonContainer}
-        onPress={() => {
-          if (usernameInput.trim()) {
-            setGlobalUsername(usernameInput.trim()); // Set username globally for the app
-            onNavigate('ConnectWallet');
-          } else {
-            Alert.alert('Input Required', 'Username cannot be empty.');
-          }
-        }}
+        onPress={handleSubmit}
       >
         <Image source={arrowButtonAsset} style={styles.arrowButton} resizeMode="contain" />
       </TouchableOpacity>
@@ -111,44 +123,24 @@ const LoginScreen = ({ onNavigate, setGlobalUsername }) => {
   );
 };
 
-// --- ConnectWalletScreen Component (Integrates Phantom Logic) ---
+// --- ConnectWalletScreen Component (No changes) ---
 const ConnectWalletScreen = ({
-  onNavigateBack,
   dappKeyPair,
   userPublicKey,
   connectionStatus,
   connectToPhantom,
-  disconnectWallet, // Function to disconnect/reset
-  username // Display the username passed from LoginScreen
 }) => {
-
   return (
     <View style={styles.screenContainer}>
-      <TouchableOpacity style={styles.backButtonPlacement} onPress={onNavigateBack}>
-        <Image source={arrowButtonAsset} style={[styles.arrowButton, styles.backArrowIcon]} resizeMode="contain" />
-      </TouchableOpacity>
-
-      <Text style={styles.welcomeText}>Welcome {username || 'User'}</Text>
+      <Text style={styles.welcomeText}>Connect your Wallet</Text>
       <Image source={logoAsset} style={styles.logo} resizeMode="contain" />
 
-      {connectionStatus !== 'Connected' && (
-        <Text style={styles.promptText}>Finish connecting wallet</Text>
-      )}
+      <Text style={styles.promptText}>Please connect your Phantom wallet to get started.</Text>
 
-      {/* Phantom Wallet Button & Status Display */}
       {connectionStatus === 'Initializing' || connectionStatus === 'Connecting' ? (
         <ActivityIndicator size="large" color="#A08FF8" style={{ marginVertical: 20 }}/>
-      ) : connectionStatus === 'Connected' && userPublicKey ? (
-        <View style={styles.connectionSuccessContainer}>
-          <Text style={styles.successText}>Wallet Connected!</Text>
-          <Text style={styles.addressTextLabel}>Address:</Text>
-          <Text style={styles.addressText}>{`${userPublicKey.slice(0, 6)}...${userPublicKey.slice(-4)}`}</Text>
-          <TouchableOpacity style={styles.disconnectButton} onPress={disconnectWallet}>
-            <Text style={styles.disconnectButtonText}>Disconnect Wallet</Text>
-          </TouchableOpacity>
-        </View>
       ) : (
-        <TouchableOpacity style={styles.phantomImageButton} onPress={connectToPhantom} disabled={!dappKeyPair || connectionStatus === 'Error'}>
+        <TouchableOpacity style={styles.phantomImageButton} onPress={connectToPhantom} disabled={!dappKeyPair || connectionStatus === 'Error' || connectionStatus === 'Connecting'}>
           <Image source={phantomButtonAsset} style={styles.phantomButtonImage} resizeMode="contain" />
         </TouchableOpacity>
       )}
@@ -164,19 +156,22 @@ const ConnectWalletScreen = ({
   );
 };
 
-// --- Main App Component (Manages state and logic for Phantom Connect) ---
+// GroupsScreen component is now imported from ./GroupsScreen.js
+
+// --- Main App Component (Manages state and logic) ---
 const App = () => {
-  const [currentScreen, setCurrentScreen] = useState('Login');
-  const [appUsername, setAppUsername] = useState(''); // Store the username from LoginScreen
+  // Screen states: 'ConnectWallet', 'SetupUsername', 'GroupsScreen'
+  const [currentScreen, setCurrentScreen] = useState('ConnectWallet');
+  const [appUsername, setAppUsername] = useState('');
+  const [userGroups, setUserGroups] = useState([]);
 
   // Phantom Connect States
   const [dappKeyPair, setDappKeyPair] = useState(null);
-  const [userPublicKey, setUserPublicKey] = useState(null); // Connected wallet's public key (string)
-  const [session, setSession] = useState(null); // Phantom session
-  const [sharedSecret, setSharedSecret] = useState(null); // For decryption
-  const [connectionStatus, setConnectionStatus] = useState('Initializing'); // Disconnected, Connecting, Connected, Error, Initializing
+  const [userPublicKey, setUserPublicKey] = useState(null);
+  const [session, setSession] = useState(null);
+  const [sharedSecret, setSharedSecret] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('Initializing');
 
-  // Initialize dApp KeyPair on Mount
   useEffect(() => {
     const initialize = async () => {
       setConnectionStatus('Initializing');
@@ -198,17 +193,53 @@ const App = () => {
     initialize();
   }, []);
 
-  // Build Phantom Connection URL
+  // --- MOCK USER DATA ---
+  const MOCK_USER_CREDENTIALS = {
+    "B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51": "luckenson", // Example: Pre-existing user
+  };
+  const MOCK_USER_GROUPS = {
+    "B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51": [{name: "Colesseum"}, {name: "ETHDenver"}, {name: "NEXUS"}, {name: "NEXUS"}, {name: "NEXUS"}, {name: "NEXUS"}], // Groups for pre-existing user
+    "defaultNewUser": [{name: "My First Pie"}], // Default groups for a brand new user
+    "defaultExistingUserNoGroups": [{name: "Explore Pies"}] // Default if user exists but has no specific groups listed
+  };
+
+  const checkDatabaseForUser = async (walletKey) => {
+    console.log(`Checking database for user with wallet: ${walletKey}`);
+    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API delay
+    const username = MOCK_USER_CREDENTIALS[walletKey];
+    if (username) {
+      console.log(`User found: ${username}`);
+      const groups = MOCK_USER_GROUPS[walletKey] || MOCK_USER_GROUPS["defaultExistingUserNoGroups"] || [];
+      setUserGroups(groups);
+      return username;
+    } else {
+      console.log('User not found in mock database.');
+      setUserGroups(MOCK_USER_GROUPS["defaultNewUser"] || []); // Assign default groups for new user
+      return null;
+    }
+  };
+
+  const saveUserToDatabase = async (walletKey, username) => {
+    console.log(`Saving user to database: Wallet: ${walletKey}, Username: ${username}`);
+    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API delay
+    MOCK_USER_CREDENTIALS[walletKey] = username;
+    // Assign default groups if this new user doesn't have specific ones yet
+    // (checkDatabaseForUser would have already set defaultNewUser groups if they were truly new)
+    // This ensures if they were somehow missed, they get some groups.
+    const groups = MOCK_USER_GROUPS[walletKey] || MOCK_USER_GROUPS["defaultNewUser"] || [];
+    setUserGroups(groups);
+    console.log('User saved to mock database. Credentials:', MOCK_USER_CREDENTIALS);
+    console.log('User groups set to:', groups);
+    return true;
+  };
+  // --- END MOCK USER DATA ---
+
   const buildConnectionUrl = useCallback(() => {
     if (!dappKeyPair) {
       console.error('Cannot build URL: Dapp keypair not ready.');
       return null;
     }
-    // redirectLink must be a path that your app can handle.
-    // For Expo Go, it's often exp://<host>/<path>
-    // For standalone apps, it's yourscheme://<path>
-    const redirectLink = ExpoLinking.createURL('onconnect'); // Creates a deep link for your app
-
+    const redirectLink = ExpoLinking.createURL('onconnect');
     const params = new URLSearchParams({
       app_url: APP_URL,
       dapp_encryption_public_key: bs58.encode(dappKeyPair.publicKey),
@@ -217,33 +248,27 @@ const App = () => {
     });
     const url = `https://phantom.app/ul/v1/connect?${params.toString()}`;
     console.log('Constructed Phantom URL:', url);
-    console.log('Redirect link for this app:', redirectLink);
     return url;
   }, [dappKeyPair]);
 
-  // Initiate Connection to Phantom
   const connectToPhantom = useCallback(async () => {
-    if (connectionStatus === 'Connected') {
-      Alert.alert('Already Connected', `Wallet ${userPublicKey.slice(0,8)}... is connected.`);
+    if (connectionStatus === 'Connected' && currentScreen !== 'ConnectWallet') {
+      Alert.alert('Already Connected', `Wallet ${userPublicKey ? userPublicKey.slice(0,8) : ''}... is connected.`);
       return;
     }
     if (!dappKeyPair || connectionStatus === 'Initializing' || connectionStatus === 'Error') {
       Alert.alert('Not Ready', 'The application is still initializing or encountered an error. Please wait or restart.');
       return;
     }
-
     const url = buildConnectionUrl();
     if (!url) {
       Alert.alert('Connection Error', 'Could not construct the Phantom connection URL.');
       return;
     }
-
     setConnectionStatus('Connecting');
-    // Reset previous connection details
     setUserPublicKey(null);
     setSession(null);
     setSharedSecret(null);
-
     try {
       const canOpen = await Linking.canOpenURL(url);
       if (canOpen) {
@@ -256,31 +281,25 @@ const App = () => {
       Alert.alert('Error', error.message || 'Could not open Phantom. Is it installed?');
       setConnectionStatus('Disconnected');
     }
-  }, [connectionStatus, dappKeyPair, userPublicKey, buildConnectionUrl]);
+  }, [connectionStatus, dappKeyPair, userPublicKey, buildConnectionUrl, currentScreen]);
 
-  // Handle Deep Link Redirect from Phantom
   const handleDeepLink = useCallback(async (event) => {
     const urlString = event.url;
     console.log('Received deep link:', urlString);
-
     const urlObject = ExpoLinking.parse(urlString);
-    // Ensure this is the redirect we expect. createURL('onconnect') might result in 'onconnect' as path or hostname.
     const isConnectRedirect = urlObject.path === 'onconnect' || urlObject.hostname === 'onconnect' || urlString.includes('onconnect');
-
 
     if (!isConnectRedirect) {
         console.log("Deep link is not for Phantom connect, ignoring.");
         return;
     }
-    if (connectionStatus !== 'Connecting') {
-       console.log("Received connect redirect but wasn't in 'Connecting' state. Current status:", connectionStatus);
-       // Potentially handle if user manually comes back without completing Phantom flow.
-       // Or if a link is triggered inadvertently.
-       // if (connectionStatus !== 'Connected') setConnectionStatus('Disconnected'); // Optional: reset if not already connected
+    if (connectionStatus !== 'Connecting' && connectionStatus !== 'Disconnected') {
+       console.log("Received connect redirect but wasn't in 'Connecting' or 'Disconnected' state. Current status:", connectionStatus);
+       if(connectionStatus !== 'Connected') setConnectionStatus('Disconnected');
        return;
     }
-
     console.log("Processing Phantom connect redirect...");
+    setConnectionStatus('Connecting');
     const params = urlObject.queryParams;
 
     if (params.errorCode) {
@@ -293,7 +312,7 @@ const App = () => {
 
     const phantomPublicKeyB58 = params.phantom_encryption_public_key;
     const nonceB58 = params.nonce;
-    const dataB58 = params.data; // This is the encrypted session and public_key
+    const dataB58 = params.data;
 
     if (!phantomPublicKeyB58 || !nonceB58 || !dataB58 || !dappKeyPair?.secretKey) {
       console.error('Missing parameters or dApp secretKey in redirect data:', {params, hasDappSecretKey: !!dappKeyPair?.secretKey });
@@ -306,18 +325,12 @@ const App = () => {
       const phantomPublicKeyBytes = bs58.decode(phantomPublicKeyB58);
       const nonceBytes = bs58.decode(nonceB58);
       const encryptedDataBytes = bs58.decode(dataB58);
-
-      console.log("Calculating shared secret...");
       const calculatedSharedSecret = nacl.box.before(phantomPublicKeyBytes, dappKeyPair.secretKey);
-      setSharedSecret(calculatedSharedSecret); // Store for potential future use (e.g. signTransaction)
-
-      console.log("Decrypting data...");
       const decryptedDataUint8 = nacl.box.open.after(encryptedDataBytes, nonceBytes, calculatedSharedSecret);
 
       if (!decryptedDataUint8) {
-        throw new Error('Failed to decrypt data from Phantom. Nonce or keys might be incorrect.');
+        throw new Error('Failed to decrypt data from Phantom.');
       }
-
       const decryptedDataString = new TextDecoder().decode(decryptedDataUint8);
       const decryptedPayload = JSON.parse(decryptedDataString);
       console.log('Decrypted Payload:', decryptedPayload);
@@ -326,82 +339,129 @@ const App = () => {
         throw new Error("Decrypted data is missing public_key or session.");
       }
 
-      setUserPublicKey(decryptedPayload.public_key); // This is the user's wallet public key (base58)
-      setSession(decryptedPayload.session);         // Phantom session token
-
+      const connectedWalletKey = decryptedPayload.public_key;
+      setUserPublicKey(connectedWalletKey);
+      setSession(decryptedPayload.session);
+      setSharedSecret(calculatedSharedSecret);
       setConnectionStatus('Connected');
-      console.log(`Successfully connected to wallet: ${decryptedPayload.public_key}`);
-      Alert.alert('Success!', `Connected to wallet: ${decryptedPayload.public_key.slice(0, 8)}...`);
+      console.log(`Successfully connected to wallet: ${connectedWalletKey}`);
+      // Removed Alert here, will show welcome on GroupsScreen or after username setup.
+
+      const existingUsername = await checkDatabaseForUser(connectedWalletKey);
+      if (existingUsername) {
+        setAppUsername(existingUsername);
+        setCurrentScreen('GroupsScreen');
+        console.log(`User '${existingUsername}' found. Navigating to GroupsScreen.`);
+      } else {
+        setCurrentScreen('SetupUsername');
+        console.log('No user found. Navigating to SetupUsername.');
+      }
 
     } catch (error) {
       console.error('Failed to handle Phantom redirect (decryption/processing):', error);
       Alert.alert('Connection Error', `Failed to process response: ${error.message}`);
+      setUserPublicKey(null);
+      setSession(null);
+      setSharedSecret(null);
       setConnectionStatus('Disconnected');
     }
-  }, [dappKeyPair, connectionStatus]); // Dependencies for the handler
+  }, [dappKeyPair, connectionStatus, checkDatabaseForUser]);
 
-  // Disconnect Wallet Function
-  const disconnectWallet = () => {
-    console.log("Disconnecting wallet...");
+  const handleLogout = () => {
+    console.log("Logging out / Disconnecting wallet...");
     setUserPublicKey(null);
     setSession(null);
     setSharedSecret(null);
+    setAppUsername('');
+    setUserGroups([]);
     setConnectionStatus('Disconnected');
-    Alert.alert("Disconnected", "Wallet has been disconnected.");
-    // Optionally, you might want to make a call to Phantom to formally disconnect if their API supports it via deep link
-    // For now, this is a client-side disconnect.
+    setCurrentScreen('ConnectWallet');
+    Alert.alert("Logged Out", "You have been successfully logged out.");
   };
 
-
-  // --- Deep Link Listeners (Adapted from PhantomConnect.js) ---
-  const linkingUrl = ExpoLinking.useURL(); // Handles links opened while app is running or resuming
+  const linkingUrl = ExpoLinking.useURL();
   useEffect(() => {
     if (linkingUrl) {
       console.log("App opened with URL (or URL changed):", linkingUrl);
       handleDeepLink({ url: linkingUrl });
     }
-  }, [linkingUrl, handleDeepLink]); // Re-run if linkingUrl or handler changes
+  }, [linkingUrl, handleDeepLink]);
 
-  useEffect(() => { // Handles links that open the app from a closed state
+  useEffect(() => {
     const subscription = ExpoLinking.addEventListener('url', handleDeepLink);
-    return () => subscription.remove(); // Cleanup on unmount
-  }, [handleDeepLink]); // Re-subscribe if handler changes
+    return () => subscription.remove();
+  }, [handleDeepLink]);
 
-
-  // Navigation Logic
-  const handleNavigation = (screenName) => setCurrentScreen(screenName);
-  const handleNavigateBack = () => {
-    if (connectionStatus === 'Connected' || connectionStatus === 'Connecting') {
-        // If user navigates back from wallet screen while connected/connecting, treat as disconnect
-        // disconnectWallet(); // Or ask for confirmation
+  const handleUsernameSubmitted = async (username) => {
+    if (userPublicKey) {
+      setAppUsername(username);
+      const success = await saveUserToDatabase(userPublicKey, username);
+      if (success) {
+        setCurrentScreen('GroupsScreen');
+        console.log(`Username '${username}' set. Navigating to GroupsScreen.`);
+        Alert.alert("Welcome!", `Username ${username} created successfully.`);
+      } else {
+        Alert.alert("Save Error", "Could not save username. Please try again.");
+      }
+    } else {
+      Alert.alert("Error", "Wallet public key not available. Please reconnect.");
+      setCurrentScreen('ConnectWallet');
     }
-    setCurrentScreen('Login');
   };
-  const handleSetUsername = (name) => setAppUsername(name);
 
+  const handleAddGroup = () => {
+    Alert.alert("Add Group", "This feature is coming soon!");
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
-      {currentScreen === 'Login' && (
-        <LoginScreen onNavigate={handleNavigation} setGlobalUsername={handleSetUsername} />
-      )}
       {currentScreen === 'ConnectWallet' && (
         <ConnectWalletScreen
-          onNavigateBack={handleNavigateBack}
           dappKeyPair={dappKeyPair}
           userPublicKey={userPublicKey}
           connectionStatus={connectionStatus}
           connectToPhantom={connectToPhantom}
-          disconnectWallet={disconnectWallet}
-          username={appUsername}
         />
+      )}
+      {currentScreen === 'SetupUsername' && userPublicKey && (
+        <SetupUsernameScreen
+          onUsernameSubmitted={handleUsernameSubmitted}
+          walletAddress={userPublicKey}
+        />
+      )}
+      {currentScreen === 'GroupsScreen' && userPublicKey && appUsername && (
+        <GroupsScreen
+          username={appUsername}
+          userGroups={userGroups}
+          onLogout={handleLogout}
+          onAddGroup={handleAddGroup}
+          // Pass assets if GroupsScreen expects them as props
+          // topPieAsset={topPieAsset}
+          // plusButtonAsset={plusButtonAsset}
+        />
+      )}
+      {(currentScreen === 'SetupUsername' && !userPublicKey) && (
+        <View style={styles.screenContainer}>
+            <Text style={styles.errorText}>Error: Wallet not connected. Cannot setup username.</Text>
+            <TouchableOpacity onPress={() => setCurrentScreen('ConnectWallet')} style={styles.genericButton}>
+                <Text style={styles.genericButtonText}>Retry Connection</Text>
+            </TouchableOpacity>
+        </View>
+      )}
+       {(currentScreen === 'GroupsScreen' && (!userPublicKey || !appUsername)) && (
+        <View style={styles.screenContainer}>
+            <Text style={styles.errorText}>Error: Session invalid. Please log in again.</Text>
+             <TouchableOpacity onPress={() => handleLogout()} style={styles.genericButton}>
+                <Text style={styles.genericButtonText}>Login Again</Text>
+            </TouchableOpacity>
+        </View>
       )}
     </SafeAreaView>
   );
 };
 
-// --- Styles ---
+// --- Styles for App.js (excluding GroupsScreen specific styles) ---
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -420,11 +480,12 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.02,
   },
   welcomeText: {
-    fontSize: width * 0.06,
+    fontSize: width * 0.065,
     color: '#FFFFFF',
     fontFamily: 'System',
-    marginBottom: height * 0.005,
+    marginBottom: height * 0.015,
     textAlign: 'center',
+    fontWeight: '600',
   },
   promptText: {
     fontSize: width * 0.045,
@@ -432,6 +493,7 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
     marginBottom: height * 0.03,
     textAlign: 'center',
+    lineHeight: width * 0.06,
   },
   input: {
     width: '100%',
@@ -452,75 +514,44 @@ const styles = StyleSheet.create({
     width: width * 0.18,
     height: width * 0.18,
   },
-  backButtonPlacement: {
-    position: 'absolute',
-    top: height * 0.06,
-    left: width * 0.05,
-    zIndex: 10,
-  },
-  backArrowIcon: {
-    width: width * 0.1,
-    height: width * 0.1,
-    transform: [{ rotate: '180deg' }],
-  },
   phantomImageButton: {
     marginTop: height * 0.02,
   },
   phantomButtonImage: {
     width: width * 0.7,
-    height: height * 0.1,
+    height: height * 0.08,
   },
-  // Styles for connection status display
-  connectionSuccessContainer: {
-    alignItems: 'center',
-    marginTop: height * 0.03,
-    padding: 20,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 10,
-    width: '100%',
-  },
-  successText: {
-    fontSize: width * 0.055,
-    color: '#4CAF50', // Green for success
-    fontWeight: 'bold',
-    marginBottom: height * 0.015,
-  },
-  addressTextLabel: {
+  addressTextSmall: {
     fontSize: width * 0.04,
-    color: '#BBBBBB',
-    marginBottom: 2,
-  },
-  addressText: {
-    fontSize: width * 0.045,
-    color: '#FFFFFF',
-    fontFamily: 'monospace', // Good for addresses
-    marginBottom: height * 0.03,
-    textAlign: 'center',
-  },
-  disconnectButton: {
-    backgroundColor: '#F44336', // Red for disconnect
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  disconnectButtonText: {
-    color: '#FFFFFF',
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
+    color: '#A0A0A0',
+    fontFamily: 'monospace',
   },
   errorText: {
     fontSize: width * 0.04,
-    color: '#FF7070', // Light red for errors
+    color: '#FF7070',
     marginTop: height * 0.02,
     textAlign: 'center',
+    paddingHorizontal: 10,
   },
   statusHelperText: {
       fontSize: width * 0.035,
       color: '#888888',
       marginTop: height * 0.015,
       textAlign: 'center',
-  }
+  },
+  genericButton: {
+    backgroundColor: '#A08FF8',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  genericButtonText: {
+    color: '#FFFFFF',
+    fontSize: width * 0.04,
+    fontWeight: 'bold',
+  },
+  // Styles previously for GroupsScreen have been moved to GroupsScreen.js
 });
 
 export default App;
