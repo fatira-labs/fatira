@@ -26,6 +26,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // Import the new GroupsScreen component
 import GroupsScreen from './GroupsScreen'; // Assuming GroupsScreen.js is in the same directory
+import CreateGroupScreen from './CreateGroupScreen'; // Add this import at the top
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
@@ -410,7 +411,20 @@ const App = () => {
   };
 
   const handleAddGroup = () => {
-    Alert.alert("Add Group", "This feature is coming soon!");
+    setCurrentScreen('CreateGroupScreen');
+  };
+
+  const handleBackFromCreateGroup = () => {
+    setCurrentScreen('GroupsScreen');
+  };
+
+  const handleCreateGroup = (groupData) => {
+    // Handle the new group creation
+    console.log('New group data:', groupData);
+    // Add the new group to userGroups
+    setUserGroups([...userGroups, { name: groupData.title }]);
+    // Return to GroupsScreen
+    setCurrentScreen('GroupsScreen');
   };
 
   return (
@@ -436,9 +450,13 @@ const App = () => {
           userGroups={userGroups}
           onLogout={handleLogout}
           onAddGroup={handleAddGroup}
-          // Pass assets if GroupsScreen expects them as props
-          // topPieAsset={topPieAsset}
-          // plusButtonAsset={plusButtonAsset}
+        />
+      )}
+      {currentScreen === 'CreateGroupScreen' && userPublicKey && appUsername && (
+        <CreateGroupScreen
+          onBack={handleBackFromCreateGroup}
+          onCreateGroup={handleCreateGroup}
+          currentUsername={appUsername}
         />
       )}
       {(currentScreen === 'SetupUsername' && !userPublicKey) && (

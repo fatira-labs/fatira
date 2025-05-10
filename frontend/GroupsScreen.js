@@ -91,11 +91,12 @@ const styles = StyleSheet.create({
   },
   groupsListContainer: {
     width: '90%',
-    flexGrow: 0, // Prevent ScrollView from taking up all space when content is small
-    maxHeight: height * 0.65, // Increased from 0.58 to 0.65 to allow more space for groups
+    flexGrow: 0,
+    maxHeight: height * 0.55, // Reduced from 0.65 to 0.55 to prevent overlap with plus button
+    marginBottom: height * 0.15, // Added margin to ensure space for plus button
   },
   groupsListContentContainer: {
-    paddingBottom: height * 0.02, // Add padding at the bottom of the scroll content
+    paddingBottom: height * 0.02,
   },
   groupBar: {
     backgroundColor: '#F0A829',
@@ -130,9 +131,8 @@ const styles = StyleSheet.create({
   },
   plusButtonContainer: {
     position: 'absolute',
-    bottom: height * 0.04, // Positioned from bottom
-    alignSelf: 'center', // Ensure it's centered
-    // Removed left/right to rely on alignSelf after ensuring parent is full width or positioned correctly
+    bottom: height * 0.04,
+    alignSelf: 'center',
   },
   plusButtonImage: {
     width: width * 0.25, // Increased from 0.16 to 0.25
