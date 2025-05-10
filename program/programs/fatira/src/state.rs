@@ -62,9 +62,10 @@ impl Group {
 		}
 	}
 
-	pub fn change_balance(&mut self, user: Pubkey, offset: i64) -> Result<()> {
+	pub fn change_balance(&mut self, user: Pubkey, amount: i64) -> Result<()> {
 		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
-			self.balances[i].balance += offset;
+			let new_balance = self.balances[i].balance.checked_add(amount).ok_or(error!(ErrorCode::AmountOverflow))?;
+			self.balances[i].balance = new_balance;
 			Ok(())
 		} else {
 			Err(error!(ErrorCode::UserDoesNotExist))

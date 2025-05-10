@@ -37,4 +37,13 @@ pub enum ErrorCode {
 
 	#[msg("The escrow is frozen")]
 	EscrowIsFrozen,
+
+	#[msg("Lengths of users and amounts do not match")]
+	InconsistentBalanceLengths,
+
+	#[msg("Negative amounts are not allowed")]
+	AmountIsNegative,
+
+	#[msg("An overflow occurred when modifying the balance")]
+	AmountOverflow
 }

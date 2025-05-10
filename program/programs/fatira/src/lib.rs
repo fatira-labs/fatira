@@ -41,22 +41,21 @@ pub mod fatira {
     }
 
     pub fn update_balances(
-        ctx: Context<UpdateBalances>, 
-        payee: Pubkey,
-        payers: Vec<Pubkey>,
-        amounts: Vec<u64>
+        ctx: Context<UpdateBalances>,
+        total_cost: i64,
+        users: Vec<Pubkey>,
+        amounts: Vec<i64>
     ) -> Result<()> {
         let group = &mut ctx.accounts.group;
-        
-        let total_cost = amounts.iter().sum::<u64>() as i64;
-        
+        let payer = &ctx.accounts.payer;
+
+        require_eq!(users.len(), amounts.len(), ErrorCode::InconsistentBalanceLengths);
+        require!(total_cost > 0, ErrorCode::AmountIsNegative);
+
+        group.change_balance(payer.key(), -1 * total_cost)?;
         for (i, amount) in amounts.iter().enumerate() {
-            let payer = payers[i];
-            let mut offset = *amount as i64;
-            if payer == payee {
-                offset -= total_cost;
-            }
-            group.change_balance(payer, offset)?;
+            require!(*amount > 0, ErrorCode::AmountIsNegative);
+            group.change_balance(users[i], *amount)?;
         }
 
         Ok(())
@@ -69,7 +68,7 @@ pub struct CreateGroup<'info> {
     pub payer: Signer<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = payer,
         space = GROUP_SIZE,
     )]
@@ -86,6 +85,9 @@ pub struct CreateGroup<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateBalances<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
     #[account(mut)]
     pub group: Account<'info, Group>,
 
