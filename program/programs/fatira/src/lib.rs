@@ -8,6 +8,7 @@ use crate::state::{Group};
 use crate::error::{ErrorCode};
 use crate::constants::{GROUP_SIZE, MAX_GROUP_USERS};
 
+
 declare_id!("ftra545Ysk9H9HjvhfqXh5xP5PTQTC1KV3rk4AADXeC");
 
 #[program]
@@ -39,18 +40,20 @@ pub mod fatira {
         Ok(())
     }
 
-    pub fn update_balances(ctx: Context<UpdateBalances>) -> Result<()> {
+    pub fn update_balances(
+        ctx: Context<UpdateBalances>, 
+        payee: Pubkey,
+        payers: Vec<Pubkey>,
+        amounts: Vec<u64>
+    ) -> Result<()> {
         let group = &mut ctx.accounts.group;
-        let payee = &ctx.accounts.payee;
-        let payers = &ctx.accounts.payers;
-        let amounts = &ctx.accounts.amounts;
-
+        
         let total_cost = amounts.iter().sum::<u64>() as i64;
         
         for (i, amount) in amounts.iter().enumerate() {
             let payer = payers[i];
             let mut offset = *amount as i64;
-            if payer == *payee {
+            if payer == payee {
                 offset -= total_cost;
             }
             group.change_balance(payer, offset)?;
@@ -85,12 +88,6 @@ pub struct CreateGroup<'info> {
 pub struct UpdateBalances<'info> {
     #[account(mut)]
     pub group: Account<'info, Group>,
-
-    pub payee: Pubkey,
-
-    pub payers: Vec<Pubkey>,
-
-    pub amounts: Vec<u64>,
 
     pub system_program: Program<'info, System>,
 }
