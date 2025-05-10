@@ -38,6 +38,26 @@ pub mod fatira {
         group.add_balance(payer.key(), 0)?;
         Ok(())
     }
+
+    pub fn update_balances(ctx: Context<UpdateBalances>) -> Result<()> {
+        let group = &mut ctx.accounts.group;
+        let payee = &ctx.accounts.payee;
+        let payers = &ctx.accounts.payers;
+        let amounts = &ctx.accounts.amounts;
+
+        let total_cost = amounts.iter().sum::<u64>() as i64;
+        
+        for (i, amount) in amounts.iter().enumerate() {
+            let payer = payers[i];
+            let mut offset = *amount as i64;
+            if payer == *payee {
+                offset -= total_cost;
+            }
+            group.change_balance(payer, offset)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -57,6 +77,20 @@ pub struct CreateGroup<'info> {
 
     /// CHECK: verify that escrow is a valid token account with the correct owner, mint, delegate, and frozen status
     pub escrow: AccountInfo<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateBalances<'info> {
+    #[account(mut)]
+    pub group: Account<'info, Group>,
+
+    pub payee: Pubkey,
+
+    pub payers: Vec<Pubkey>,
+
+    pub amounts: Vec<u64>,
 
     pub system_program: Program<'info, System>,
 }

@@ -61,4 +61,13 @@ impl Group {
 			Err(error!(ErrorCode::UserDoesNotExist))
 		}
 	}
+
+	pub fn change_balance(&mut self, user: Pubkey, offset: i64) -> Result<()> {
+		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
+			self.balances[i].balance += offset;
+			Ok(())
+		} else {
+			Err(error!(ErrorCode::UserDoesNotExist))
+		}
+	}
 }
