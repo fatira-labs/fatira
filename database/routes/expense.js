@@ -44,12 +44,17 @@ router.post("/newExpense", async (req, res) => {
             }
         }
 
+        if (payee !== payers[0]) {
+            return res.status(400).json({message: "Payee must be the first payer"});
+        }
+
         for (const amount of amounts) {
             if (Number.isNaN(amount) || amount < 0) {
                 return res.status(400).json({message: "All amounts must be nonnegative numbers"});
             }
         }
-
+        const decimalAmounts = amounts.map(amount => new Decimal128(amount));
+        
         // Filter out zero amounts and their corresponding payers
         const nonZeroIndices = amounts.map((amount, index) => ({ amount, index }))
             .filter(item => item.amount > 0);
@@ -60,6 +65,11 @@ router.post("/newExpense", async (req, res) => {
         if (payers.length === 0) {
             return res.status(400).json({message: "At least one payer must have a non-zero amount"});
         }
+
+        const amountSum = amounts.reduce((sum, amount) => sum + amount, 0);
+        if (amountSum !== totalCost) {
+            return res.status(400).json({message: "Sum of amounts must equal total cost"});
+        }
         
         const totalCostDecimal = new Decimal128(totalCost);
         const newExpense = new Expense({
@@ -69,7 +79,7 @@ router.post("/newExpense", async (req, res) => {
             totalCost: totalCostDecimal,
             payee,
             payers,
-            amounts
+            amounts: decimalAmounts
         });
         await newExpense.save();
         res.status(201).json({message: "Expense created successfully", expense: newExpense});
