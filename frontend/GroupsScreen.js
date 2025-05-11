@@ -9,25 +9,24 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  StatusBar
+  StatusBar,
+  Alert // Alert can be removed if no longer used directly here
 } from 'react-native';
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
 // --- Asset Placeholders ---
-// These assets are expected to be passed as props or defined globally in App.js
-// For better encapsulation, you might consider passing the direct require paths as props
-// or requiring them directly here if they are static.
-// For now, we assume topPieAsset and plusButtonAsset are passed via props if defined in App.js
-// If they are static and always the same, you could do:
+// Ensure these assets are in your ./assets folder
 const topPieAsset = require('./assets/toppie1.png');
 const plusButtonAsset = require('./assets/pieplus.png');
 
-const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup }) => {
+// Added onSelectGroup to props
+const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup, onSelectGroup }) => {
   return (
     <View style={styles.groupsScreenContainer}>
       <Image source={topPieAsset} style={styles.topPieImage} resizeMode="contain" />
+      {/* Re-enabled Logout Button - comment out if not needed */}
       {/* <TouchableOpacity style={styles.logoutButtonPlacement} onPress={onLogout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity> */}
@@ -35,8 +34,12 @@ const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup }) => {
       <Text style={styles.groupsTitle}>{username}'s groups:</Text>
       <ScrollView style={styles.groupsListContainer} contentContainerStyle={styles.groupsListContentContainer}>
         {userGroups && userGroups.length > 0 ? (
-          userGroups.map((group, index) => (
-            <TouchableOpacity key={index} style={styles.groupBar} onPress={() => Alert.alert("Group Tapped", `You tapped on ${group.name}`)}>
+          userGroups.map((group) => ( // Changed from (group, index) to (group)
+            <TouchableOpacity
+              key={group.id || group.name} // Use group.id for key if available, otherwise fallback to name
+              style={styles.groupBar}
+              onPress={() => onSelectGroup(group)} // Call onSelectGroup with the specific group data
+            >
               <Text style={styles.groupBarText}>{group.name}</Text>
             </TouchableOpacity>
           ))
@@ -53,6 +56,8 @@ const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup }) => {
 };
 
 // --- Styles for GroupsScreen ---
+// These styles are taken from your uploaded GroupsScreen.js.
+// Ensure they match your desired layout.
 const styles = StyleSheet.create({
   groupsScreenContainer: {
     flex: 1,
@@ -68,10 +73,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0, // Added right: 0 to ensure full width
   },
+  // Styles for Logout Button (re-enabled)
   logoutButtonPlacement: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? height * 0.04 : height * 0.04, 
-    right: width * 0,
+    top: Platform.OS === 'ios' ? height * 0.06 : height * 0.04, // Adjusted to be visible
+    right: width * 0.05,
     zIndex: 10,
     padding: 10,
   },
@@ -92,7 +98,7 @@ const styles = StyleSheet.create({
   groupsListContainer: {
     width: '90%',
     flexGrow: 0,
-    maxHeight: height * 0.55, // Reduced from 0.65 to 0.55 to prevent overlap with plus button
+    maxHeight: height * 0.75, // Reduced from 0.65 to 0.55 to prevent overlap with plus button
     marginBottom: height * 0.15, // Added margin to ensure space for plus button
   },
   groupsListContentContainer: {
@@ -131,7 +137,7 @@ const styles = StyleSheet.create({
   },
   plusButtonContainer: {
     position: 'absolute',
-    bottom: height * 0.04,
+    bottom: height * 0,
     alignSelf: 'center',
   },
   plusButtonImage: {
