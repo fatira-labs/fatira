@@ -3,7 +3,6 @@ import React from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,8 @@ import {
   StatusBar,
   Alert
 } from 'react-native';
+import { Image } from 'expo-image';
+
 import BottomNavBar from './BottomNavBar'; // Import the BottomNavBar
 
 const { width, height } = Dimensions.get('window');

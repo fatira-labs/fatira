@@ -1,6 +1,8 @@
 // BottomNavBar.js
 import React from 'react';
-import { View, TouchableOpacity, Image, StyleSheet, Dimensions, Alert } from 'react-native';
+import { Image } from 'expo-image';
+
+import { View, TouchableOpacity, StyleSheet, Dimensions, Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 

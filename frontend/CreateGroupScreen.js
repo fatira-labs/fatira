@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   Modal,
   Alert
 } from 'react-native';
+import { Image } from 'expo-image';
 
 // Get screen dimensions
 const { width, height } = Dimensions.get('window');

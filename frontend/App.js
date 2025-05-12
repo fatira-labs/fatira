@@ -7,7 +7,6 @@ import {
   View,
   Text,
   TextInput,
-  Image,
   TouchableOpacity,
   StatusBar,
   Dimensions,
@@ -22,11 +21,15 @@ import * as ExpoLinking from 'expo-linking';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import * as SecureStore from 'expo-secure-store';
+import 'react-native-get-random-values'; // Required by some crypto libraries
+import { Image } from 'expo-image';
+
 
 // Import screen components
 import GroupsScreen from './GroupsScreen';
 import CreateGroupScreen from './CreateGroupScreen';
 import GroupMainScreen from './GroupMainScreen';
+import AddExpenseScreen from './AddExpenseScreen'; // Import the new AddExpenseScreen
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
@@ -138,11 +141,12 @@ const ConnectWalletScreen = ({ dappKeyPair, connectionStatus, connectToPhantom }
 
 // --- Main App Component ---
 const App = () => {
-  // Screen states: 'ConnectWallet', 'SetupUsername', 'GroupsScreen', 'CreateGroupScreen', 'GroupMainScreen'
+  // Screen states: 'ConnectWallet', 'SetupUsername', 'GroupsScreen', 'CreateGroupScreen', 'GroupMainScreen', 'AddExpenseScreen'
   const [currentScreen, setCurrentScreen] = useState('ConnectWallet');
   const [appUsername, setAppUsername] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState(null); // Stores the currently selected group object
-  const [userGroups, setUserGroups] = useState([]); // Stores the list of groups for the current user
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [userGroups, setUserGroups] = useState([]);
+  const [previousScreen, setPreviousScreen] = useState('GroupsScreen'); // To track where to go back from AddExpense
 
   // Phantom Connect States
   const [dappKeyPair, setDappKeyPair] = useState(null);
@@ -171,40 +175,34 @@ const App = () => {
     initialize();
   }, []);
 
-  // --- MOCK DATA (Preserving user's structure and adding necessary fields) ---
+  // --- MOCK DATA ---
   const MOCK_USER_CREDENTIALS = {
     "B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51": "luckenson",
-    // Add another mock user for testing if needed
     "AnotherWalletKeyForTesting123": "TestUser2",
   };
 
-  // MOCK_USER_GROUPS now stores groups with id, balance, and token
-  // Keyed by wallet public key
   const MOCK_USER_GROUPS_DB = {
     "B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51": [
       { id: "group_luckenson_1", name: "Colesseum", balance: 20, token: "USDC", members: ["luckenson", "Alice", "Bob"] },
       { id: "group_luckenson_2", name: "ETHDenver", balance: -15, token: "SOL", members: ["luckenson", "Charlie"] },
       { id: "group_luckenson_3", name: "NEXUS", balance: 0, token: "EURC", members: ["luckenson", "David", "Eve"] },
-
-
     ],
     "AnotherWalletKeyForTesting123": [
       { id: "group_testuser2_1", name: "Gaming Crew", balance: 5, token: "USDC", members: ["TestUser2", "Gamer1"] },
     ],
-    "defaultNewUser": [], // New users start with no groups, or you can add a default one here
+    "defaultNewUser": [],
   };
 
-  // MOCK_GROUP_TRANSACTIONS stores transaction lists for each group, keyed by group.id
   const MOCK_GROUP_TRANSACTIONS = {
-    "group_luckenson_1": [ // Transactions for Colesseum
+    "group_luckenson_1": [
       { id: "tx_col_1", date: "05/10", title: "Hackathon Pizza", paidBy: "Alice", totalAmount: 60, yourShare: 20, type: "group_expense_involved", fullDetail: "Alice paid $60 for pizzas" },
       { id: "tx_col_2", date: "05/09", title: "Cloud Credits", paidBy: "You", totalAmount: 25, yourShare: 25, type: "lent", fullDetail: "You paid $25 for cloud credits" },
     ],
-    "group_luckenson_2": [ // Transactions for ETHDenver
+    "group_luckenson_2": [
       { id: "tx_ethd_1", date: "04/26", title: "Chipotle", paidBy: "Charlie", totalAmount: 40, yourShare: 20, type: "borrowed", fullDetail: "Charlie paid $40, you owe $20" },
       { id: "tx_ethd_2", date: "04/20", title: "Uber", paidBy: "You", totalAmount: 15, yourShare: 15, type: "lent", fullDetail: "You paid $15 for Uber" },
     ],
-    "group_luckenson_3": [], // NEXUS - no transactions yet
+    "group_luckenson_3": [],
     "group_testuser2_1": [
       { id: "tx_gaming_1", date: "05/05", title: "New Game Purchase", paidBy: "Gamer1", totalAmount: 70, yourShare: 35, type: "group_expense_involved", fullDetail: "Gamer1 bought a new game for $70" },
     ],
@@ -231,7 +229,7 @@ const App = () => {
     console.log(`Saving user to database: Wallet: ${walletKey}, Username: ${username}`);
     await new Promise(resolve => setTimeout(resolve, 700));
     MOCK_USER_CREDENTIALS[walletKey] = username;
-    if (!MOCK_USER_GROUPS_DB[walletKey]) { // If user is new, assign default groups
+    if (!MOCK_USER_GROUPS_DB[walletKey]) {
       MOCK_USER_GROUPS_DB[walletKey] = [...(MOCK_USER_GROUPS_DB["defaultNewUser"] || [])];
     }
     setUserGroups(MOCK_USER_GROUPS_DB[walletKey]);
@@ -306,10 +304,11 @@ const App = () => {
 
   // Navigation to Create Group Screen
   const handleNavigateToCreateGroup = () => {
+    setPreviousScreen(currentScreen); // Store current screen
     setCurrentScreen('CreateGroupScreen');
   };
 
-  // Navigation back to Groups Screen (from CreateGroup or GroupMain)
+  // Navigation back to Groups Screen (from CreateGroup or GroupMain or AddExpense)
   const handleBackToGroups = () => {
     setSelectedGroup(null); // Clear selected group when returning to the list
     setCurrentScreen('GroupsScreen');
@@ -318,20 +317,20 @@ const App = () => {
   // Create Group Logic
   const handleCreateGroup = (groupData) => {
     console.log('Creating group with data:', groupData);
-    const newGroupId = `group_${appUsername.toLowerCase()}_${Date.now()}`; // More unique ID
+    const newGroupId = `group_${appUsername.toLowerCase()}_${Date.now()}`;
     const newGroup = {
       id: newGroupId,
       name: groupData.title,
-      token: groupData.token, // Token info from CreateGroupScreen
-      balance: 0, // New groups start with 0 balance for the current user
-      members: groupData.members, // Members list from CreateGroupScreen
+      token: groupData.token,
+      balance: 0,
+      members: groupData.members,
     };
 
     if (userPublicKey) {
       const updatedGroupsForUser = [...(MOCK_USER_GROUPS_DB[userPublicKey] || []), newGroup];
       MOCK_USER_GROUPS_DB[userPublicKey] = updatedGroupsForUser;
       setUserGroups(updatedGroupsForUser);
-      MOCK_GROUP_TRANSACTIONS[newGroupId] = []; // Initialize empty transactions for the new group
+      MOCK_GROUP_TRANSACTIONS[newGroupId] = [];
       console.log("Updated MOCK_USER_GROUPS_DB:", MOCK_USER_GROUPS_DB);
       console.log("Updated MOCK_GROUP_TRANSACTIONS:", MOCK_GROUP_TRANSACTIONS);
     }
@@ -341,18 +340,70 @@ const App = () => {
 
   // Navigate to the main page for a selected group
   const handleNavigateToGroupMain = (group) => {
+    setPreviousScreen(currentScreen); // Store current screen
     setSelectedGroup(group);
     setCurrentScreen('GroupMainScreen');
   };
 
+  // Navigate to Add Expense Screen
+  const handleNavigateToAddExpense = () => {
+    setPreviousScreen(currentScreen); // Store current screen
+    setCurrentScreen('AddExpenseScreen');
+  };
+
+  // Handle creation of an expense
+  const handleCreateExpense = (expenseData) => {
+    console.log('Creating expense with data:', expenseData);
+    // Determine the target group for the expense
+    // If selectedGroup is set (i.e., adding expense from within a group), use that.
+    // Otherwise, this logic might need adjustment based on UX (e.g., prompt user to select a group).
+    const targetGroupId = selectedGroup ? selectedGroup.id : (userGroups[0] ? userGroups[0].id : null); // Fallback for now
+
+    if (targetGroupId) {
+        const newExpenseId = `exp_${targetGroupId}_${Date.now()}`;
+        const newExpense = {
+            id: newExpenseId,
+            date: expenseData.date,
+            title: expenseData.name,
+            paidBy: appUsername, // Assume current user paid
+            totalAmount: expenseData.totalAmount,
+            yourShare: expenseData.totalAmount, // Simplified: assume user paid full, actual share depends on split
+            type: 'group_expense_involved', // Default type, can be refined by splitDetails
+            fullDetail: `${appUsername} paid $${expenseData.totalAmount} for ${expenseData.name}`,
+            imageUri: expenseData.imageUri,
+            splitDetails: expenseData.splitDetails,
+        };
+        if (!MOCK_GROUP_TRANSACTIONS[targetGroupId]) {
+            MOCK_GROUP_TRANSACTIONS[targetGroupId] = [];
+        }
+        MOCK_GROUP_TRANSACTIONS[targetGroupId].unshift(newExpense); // Add to beginning of list
+        console.log("Updated transactions for group", targetGroupId, MOCK_GROUP_TRANSACTIONS[targetGroupId]);
+
+        // Optional: Update group balance if this expense directly affects it for the current user
+        // This is a complex part depending on your app's accounting logic.
+        // For example, if you paid, your balance with the group might change.
+        // For now, we'll keep it simple and not auto-update balance here.
+
+    } else {
+        console.warn("Could not determine target group for the expense. Expense not added to a specific group's transaction list.");
+    }
+    Alert.alert('Expense Added!', `Expense "${expenseData.name}" has been recorded.`);
+    // Navigate back to the previous screen (e.g., GroupMainScreen or GroupsScreen)
+    setCurrentScreen(previousScreen);
+  };
+
+  // Navigate back from AddExpenseScreen
+  const handleBackFromAddExpense = () => {
+    setCurrentScreen(previousScreen); // Go back to the screen user was on before AddExpense
+  };
+
   // Placeholder Navigations for BottomNavBar items and Group Settings
-  const handleNavAdd = () => Alert.alert("Navigate", "Add/Create new transaction page (To be implemented)");
   const handleNavMoney = () => Alert.alert("Navigate", "Money/Summary page (To be implemented)");
   const handleNavProfile = () => Alert.alert("Navigate", "User Profile page (To be implemented)");
   const handleNavGroupSettings = () => Alert.alert("Navigate", "Group Settings page (To be implemented)");
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       {currentScreen === 'ConnectWallet' && (
         <ConnectWalletScreen dappKeyPair={dappKeyPair} connectionStatus={connectionStatus} connectToPhantom={connectToPhantom} />
@@ -365,13 +416,13 @@ const App = () => {
           username={appUsername}
           userGroups={userGroups}
           onLogout={handleLogout}
-          onAddGroup={handleNavigateToCreateGroup} // Renamed from onAddGroup
-          onSelectGroup={handleNavigateToGroupMain} // New prop
+          onAddGroup={handleNavigateToCreateGroup}
+          onSelectGroup={handleNavigateToGroupMain}
         />
       )}
       {currentScreen === 'CreateGroupScreen' && userPublicKey && appUsername && (
         <CreateGroupScreen
-          onBack={handleBackToGroups} // Changed from handleBackFromCreateGroup
+          onBack={handleBackToGroups}
           onCreateGroup={handleCreateGroup}
           currentUsername={appUsername}
         />
@@ -383,10 +434,22 @@ const App = () => {
           transactions={MOCK_GROUP_TRANSACTIONS[selectedGroup.id] || []}
           onNavigateToSettings={handleNavGroupSettings}
           // BottomNavBar props
-          onNavigateHome={handleBackToGroups} // Home button on nav bar goes back to GroupsScreen
-          onNavigateAdd={handleNavAdd}
+          onNavigateHome={handleBackToGroups}
+          onNavigateAdd={handleNavigateToAddExpense} // Navigate to Add Expense
           onNavigateMoney={handleNavMoney}
           onNavigateProfile={handleNavProfile}
+        />
+      )}
+      {currentScreen === 'AddExpenseScreen' && userPublicKey && appUsername && (
+        <AddExpenseScreen
+            onBack={handleBackFromAddExpense}
+            onCreateExpense={handleCreateExpense}
+            // currentGroup={selectedGroup} // Pass if AddExpenseScreen needs specific group context immediately
+            // BottomNavBar props
+            onNavigateHome={handleBackToGroups}
+            onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
+            onNavigateMoney={handleNavMoney}
+            onNavigateProfile={handleNavProfile}
         />
       )}
 
@@ -397,7 +460,7 @@ const App = () => {
                 <Text style={styles.genericButtonText}>Retry Connection</Text>
             </TouchableOpacity></View>
       )}
-      {( (currentScreen === 'GroupsScreen' || currentScreen === 'CreateGroupScreen' || currentScreen === 'GroupMainScreen') && (!userPublicKey || !appUsername) ) && (
+      {( (currentScreen !== 'ConnectWallet' && currentScreen !== 'SetupUsername') && (!userPublicKey || !appUsername) ) && (
         <View style={styles.screenContainer}><Text style={styles.errorText}>Error: Session invalid.</Text>
             <TouchableOpacity onPress={() => handleLogout()} style={styles.genericButton}>
                 <Text style={styles.genericButtonText}>Login Again</Text>
@@ -409,7 +472,10 @@ const App = () => {
 
 // --- Styles for App.js (shared styles) ---
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#1A1A1A' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#1A1A1A',
+  },
   screenContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: width * 0.1, backgroundColor: '#1A1A1A' },
   logo: { width: width * 0.4, height: height * 0.1, marginBottom: height * 0.02 },
   welcomeText: { fontSize: width * 0.065, color: '#FFFFFF', fontFamily: 'System', marginBottom: height * 0.015, textAlign: 'center', fontWeight: '600' },

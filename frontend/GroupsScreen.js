@@ -3,7 +3,6 @@ import React from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,8 @@ import {
   StatusBar,
   Alert // Alert can be removed if no longer used directly here
 } from 'react-native';
+import { Image } from 'expo-image';
+
 
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
