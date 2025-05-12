@@ -82,7 +82,6 @@ const AddExpenseScreen = ({
 
     Alert.alert(
       "Add Photo",
-      "Choose an option:",
       [
         { 
           text: "From Library", 
