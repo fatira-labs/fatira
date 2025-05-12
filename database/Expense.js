@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, Decimal128 } from 'mongoose'
 import User from './User.js'
 
-const Expense = new Schema({
+const expenseSchema = new Schema({
     group: String, // group id
     name: String, 
     description: String,
@@ -11,5 +11,5 @@ const Expense = new Schema({
     amounts: [Decimal128],
 });
 
-const Expenses = new model('Expense', Expense);
+const Expense = new model('Expense', expenseSchema);
 export default Expense;

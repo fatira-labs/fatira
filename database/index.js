@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import userRoutes from './routes/user.js';
 import cors from 'cors';
+import expenseRoutes from './routes/expense.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use('/api/users', userRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 async function main() {
   try {
