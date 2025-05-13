@@ -24,6 +24,7 @@ import * as SecureStore from 'expo-secure-store';
 import 'react-native-get-random-values'; // Required by some crypto libraries
 import { Image } from 'expo-image';
 import MoneyPage from "./moneyPay.js";
+import { Connection, Transaction } from '@solana/web3.js';
 
 // Import screen components
 import GroupsScreen from './GroupsScreen';
@@ -352,46 +353,131 @@ const App = () => {
     setCurrentScreen('AddExpenseScreen');
   };
 
-  // Handle creation of an expense
-  const handleCreateExpense = (expenseData) => {
-    console.log('Creating expense with data:', expenseData);
+  // // Handle creation of an expense
+  // const handleCreateExpense = (expenseData) => {
+  //   console.log('Creating expense with data:', expenseData);
     // Determine the target group for the expense
     // If selectedGroup is set (i.e., adding expense from within a group), use that.
     // Otherwise, this logic might need adjustment based on UX (e.g., prompt user to select a group).
-    const targetGroupId = selectedGroup ? selectedGroup.id : (userGroups[0] ? userGroups[0].id : null); // Fallback for now
+  //   const targetGroupId = selectedGroup ? selectedGroup.id : (userGroups[0] ? userGroups[0].id : null); // Fallback for now
 
-    if (targetGroupId) {
-        const newExpenseId = `exp_${targetGroupId}_${Date.now()}`;
-        const newExpense = {
-            id: newExpenseId,
-            date: expenseData.date,
-            title: expenseData.name,
-            paidBy: appUsername, // Assume current user paid
-            totalAmount: expenseData.totalAmount,
-            yourShare: expenseData.totalAmount, // Simplified: assume user paid full, actual share depends on split
-            type: 'group_expense_involved', // Default type, can be refined by splitDetails
-            fullDetail: `${appUsername} paid $${expenseData.totalAmount} for ${expenseData.name}`,
-            imageUri: expenseData.imageUri,
-            splitDetails: expenseData.splitDetails,
-        };
-        if (!MOCK_GROUP_TRANSACTIONS[targetGroupId]) {
-            MOCK_GROUP_TRANSACTIONS[targetGroupId] = [];
+  //   if (targetGroupId) {
+  //       const newExpenseId = `exp_${targetGroupId}_${Date.now()}`;
+  //       const newExpense = {
+  //           id: newExpenseId,
+  //           date: expenseData.date,
+  //           title: expenseData.name,
+  //           paidBy: appUsername, // Assume current user paid
+  //           totalAmount: expenseData.totalAmount,
+  //           yourShare: expenseData.totalAmount, // Simplified: assume user paid full, actual share depends on split
+  //           type: 'group_expense_involved', // Default type, can be refined by splitDetails
+  //           fullDetail: `${appUsername} paid $${expenseData.totalAmount} for ${expenseData.name}`,
+  //           imageUri: expenseData.imageUri,
+  //           splitDetails: expenseData.splitDetails,
+  //       };
+  //       if (!MOCK_GROUP_TRANSACTIONS[targetGroupId]) {
+  //           MOCK_GROUP_TRANSACTIONS[targetGroupId] = [];
+  //       }
+  //       MOCK_GROUP_TRANSACTIONS[targetGroupId].unshift(newExpense); // Add to beginning of list
+  //       console.log("Updated transactions for group", targetGroupId, MOCK_GROUP_TRANSACTIONS[targetGroupId]);
+
+  //       // Optional: Update group balance if this expense directly affects it for the current user
+  //       // This is a complex part depending on your app's accounting logic.
+  //       // For example, if you paid, your balance with the group might change.
+  //       // For now, we'll keep it simple and not auto-update balance here.
+
+  //   } else {
+  //       console.warn("Could not determine target group for the expense. Expense not added to a specific group's transaction list.");
+  //   }
+  //   Alert.alert('Expense Added!', `Expense "${expenseData.name}" has been recorded.`);
+  //   // Navigate back to the previous screen (e.g., GroupMainScreen or GroupsScreen)
+  //   setCurrentScreen(previousScreen);
+  // };
+
+  const handleCreateExpense = async (expenseData) => {
+    try {
+      console.log('Creating expense with data:', expenseData);
+      const targetGroupId = selectedGroup ? selectedGroup.id : (userGroups[0] ? userGroups[0].id : null);
+      if (!targetGroupId) {
+        Alert.alert('Error', 'No group selected. Please select a group to add the expense.');
+        return;
+      }
+
+      const expensePayload = {
+        group: targetGroupId,
+        name: expenseData.name,
+        description: expenseData.description,
+        totalCost: expenseData.totalCost,
+        payee: expenseData.payee,
+        payers: expenseData.payers,
+        amounts: expenseData.amounts,
+      };
+
+      const response = await fetch('http://10.0.0.125:3000/api/expenses/newExpense', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(expensePayload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to create expense. Please try again.');
+      }
+
+      if (result.transaction) {
+        try {
+          const txBuffer = Buffer.from(result.transaction, 'base64');
+          const deserializedTx = Transaction.from(txBuffer);
+
+          const signedTx = await wallet.signTransaction(deserializedTx);
+
+          const connection = new Connection(CLUSTER);
+          const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+          await connection.confirmTransaction({
+            signature,
+            blockhash: signedTx.recentBlockhash,
+            lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight
+          });
+        } catch (txError) {
+          console.error('Error signing/submitting transaction:', txError);
+          Alert.alert(
+            'Transaction Error',
+            'The expense was created, but there was an error updating the on-chain balances. Please try again later.'
+          );
         }
-        MOCK_GROUP_TRANSACTIONS[targetGroupId].unshift(newExpense); // Add to beginning of list
-        console.log("Updated transactions for group", targetGroupId, MOCK_GROUP_TRANSACTIONS[targetGroupId]);
+      }
 
-        // Optional: Update group balance if this expense directly affects it for the current user
-        // This is a complex part depending on your app's accounting logic.
-        // For example, if you paid, your balance with the group might change.
-        // For now, we'll keep it simple and not auto-update balance here.
+      const newExpense = {
+        id: `exp_${targetGroupId}_${Date.now()}`,
+        date: expenseData.date,
+        title: expenseData.name,
+        paidBy: appUsername,
+        totalAmount: expenseData.totalCost,
+        yourShare: expenseData.totalCost,
+        type: 'group_expense_involved',
+        fullDetail: `${appUsername} paid $${expenseData.totalCost} for ${expenseData.name}`,
+        imageUri: expenseData.imageUri,
+        splitDetails: expenseData.splitDetails,
+      };
 
-    } else {
-        console.warn("Could not determine target group for the expense. Expense not added to a specific group's transaction list.");
+      if (!MOCK_GROUP_TRANSACTIONS[targetGroupId]) {
+        MOCK_GROUP_TRANSACTIONS[targetGroupId] = [];
+      }
+
+      MOCK_GROUP_TRANSACTIONS[targetGroupId].unshift(newExpense);
+
+      Alert.alert('Success', 'Expense created successfully. Balances updated.');
+      setCurrentScreen(previousScreen);
+
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      Alert.alert('Error', error.message || 'Failed to create expense.');
     }
-    Alert.alert('Expense Added!', `Expense "${expenseData.name}" has been recorded.`);
-    // Navigate back to the previous screen (e.g., GroupMainScreen or GroupsScreen)
-    setCurrentScreen(previousScreen);
-  };
+  }
 
   // Navigate back from AddExpenseScreen
   const handleBackFromAddExpense = () => {
