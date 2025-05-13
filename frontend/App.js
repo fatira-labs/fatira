@@ -31,6 +31,8 @@ import CreateGroupScreen from './CreateGroupScreen';
 import GroupMainScreen from './GroupMainScreen';
 import AddExpenseScreen from './AddExpenseScreen'; // Import the new AddExpenseScreen
 
+// TODO: handle solana transaction
+
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 

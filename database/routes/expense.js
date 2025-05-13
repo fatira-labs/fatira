@@ -1,5 +1,8 @@
 import express from "express";
 import Expense from "../Expense.js";
+import { createUpdateBalancesTransaction } from "../utils/solana.js";
+
+// TODO: use createUpdateBalancesTransaction to create a transaction to update balances in the group
 
 const router = express.Router();
 
@@ -92,4 +95,3 @@ router.post("/newExpense", async (req, res) => {
 
 export default router;
 
-// TODO: make onchain transaction to update balances in group, prolly call a function in program directory
