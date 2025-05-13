@@ -23,16 +23,15 @@ import bs58 from 'bs58';
 import * as SecureStore from 'expo-secure-store';
 import 'react-native-get-random-values'; // Required by some crypto libraries
 import { Image } from 'expo-image';
-
+import MoneyPage from "./moneyPay.js";
 
 // Import screen components
 import GroupsScreen from './GroupsScreen';
 import CreateGroupScreen from './CreateGroupScreen';
 import GroupMainScreen from './GroupMainScreen';
 import AddExpenseScreen from './AddExpenseScreen'; // Import the new AddExpenseScreen
-
-// TODO: handle solana transaction
-
+import ViewExpenseScreen from './ViewExpenseScreen';
+import SettingScreen from './settingScreen.js';
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
@@ -396,13 +395,24 @@ const App = () => {
 
   // Navigate back from AddExpenseScreen
   const handleBackFromAddExpense = () => {
+    console.log(previousScreen);
     setCurrentScreen(previousScreen); // Go back to the screen user was on before AddExpense
   };
 
   // Placeholder Navigations for BottomNavBar items and Group Settings
-  const handleNavMoney = () => Alert.alert("Navigate", "Money/Summary page (To be implemented)");
-  const handleNavProfile = () => Alert.alert("Navigate", "User Profile page (To be implemented)");
-  const handleNavGroupSettings = () => Alert.alert("Navigate", "Group Settings page (To be implemented)");
+  const handleNavMoney = () =>{
+    setPreviousScreen(currentScreen); // Store current screen
+   
+    setCurrentScreen('MoneyPage');
+  }
+  const handleNavProfile = () => {
+    setPreviousScreen(currentScreen); // Store current screen
+    setCurrentScreen('ViewExpenseScreen');
+  }
+  const handleNavGroupSettings = () => {
+    setPreviousScreen(currentScreen); // Store current screen
+    setCurrentScreen('SettingScreen');
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -435,6 +445,7 @@ const App = () => {
           groupBalance={selectedGroup.balance}
           transactions={MOCK_GROUP_TRANSACTIONS[selectedGroup.id] || []}
           onNavigateToSettings={handleNavGroupSettings}
+        
           // BottomNavBar props
           onNavigateHome={handleBackToGroups}
           onNavigateAdd={handleNavigateToAddExpense} // Navigate to Add Expense
@@ -454,6 +465,55 @@ const App = () => {
             onNavigateProfile={handleNavProfile}
         />
       )}
+
+      {currentScreen === 'ViewExpenseScreen' && userPublicKey && appUsername && (
+        <ViewExpenseScreen 
+            onBack={handleBackFromAddExpense}
+           
+            currentGroup={"group_luckenson_1"} 
+            expense={MOCK_GROUP_TRANSACTIONS["group_luckenson_1"] || []} // Pass the first transaction for demo
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB['B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51']}//// CHANGE THIS TO userPublicKey in the future
+            // BottomNavBar props
+            onNavigateHome={handleBackToGroups}
+            onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
+            onNavigateMoney={handleNavMoney}
+            onNavigateProfile={handleNavProfile}
+        />
+        )}
+
+        {currentScreen === 'MoneyPage' && userPublicKey && appUsername && (
+        <MoneyPage 
+            onBack={handleBackFromAddExpense}
+            currentGroup={"group_luckenson_1"} 
+            expense={MOCK_GROUP_TRANSACTIONS["group_luckenson_1"] || []} // Pass the first transaction for demo
+         
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB['B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51']}// CHANGE THIS TO userPublicKey in the future
+          
+            // BottomNavBar props
+            onNavigateHome={handleBackToGroups}
+            onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
+            onNavigateMoney={handleNavMoney}
+            onNavigateProfile={handleNavProfile}
+        />
+        )}
+
+        {currentScreen === 'SettingScreen' && userPublicKey && appUsername && (
+        <SettingScreen 
+            onBack={handleBackFromAddExpense}
+            currentGroup={"group_luckenson_1"} 
+            expense={MOCK_GROUP_TRANSACTIONS["group_luckenson_1"] || []} // Pass the first transaction for demo
+            userPublicKey={"B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51"} // CHANGE THIS TO userPublicKey in the future
+            appUsername={"luckenson"} // luckenson
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB}
+            MOCK_USER_CREDENTIALS={MOCK_USER_CREDENTIALS}
+            // BottomNavBar props
+            onNavigateHome={handleBackToGroups}
+            onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
+            onNavigateMoney={handleNavMoney}
+            onNavigateProfile={handleNavProfile}
+        />
+        )}
+      
 
       {/* Fallback Screens */}
       {(currentScreen === 'SetupUsername' && !userPublicKey) && (

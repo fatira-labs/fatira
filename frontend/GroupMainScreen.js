@@ -19,10 +19,7 @@ const { width, height } = Dimensions.get('window');
 
 // --- Asset Imports ---
 const settingsIcon = require('./assets/piesettings.png');
-// Transaction icons (optional, if you want to add icons to transactions)
-// const borrowedIcon = require('./assets/borrowed_icon.png');
-// const lentIcon = require('./assets/lent_icon.png');
-// const paidIcon = require('./assets/paid_icon.png');
+
 
 // --- Colors ---
 const POSITIVE_BALANCE_COLOR = '#3E8000';
