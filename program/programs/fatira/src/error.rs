@@ -76,4 +76,7 @@ pub enum ErrorCode {
 
 	#[msg("The escrow does not have a sufficient balance to process this withdrawal")]
 	InsufficientEscrowBalance,
+
+	#[msg("The instruction requires an admin key")]
+	Unauthorized,
 }
