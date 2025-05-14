@@ -46,11 +46,12 @@ pub mod fatira {
         group.escrow = *escrow.key();
         group.balances = Vec::with_capacity(MAX_GROUP_USERS);
         group.add_balance(*payer.key(), 0)?;
+        group.approve_balance(*payer.key())?;
 
         Ok(())
     }
 
-    pub fn add_user(ctx: Context<AddRemoveUser>, user: Pubkey) -> Result<()> {
+    pub fn add_user(ctx: Context<ModifyUser>, user: Pubkey) -> Result<()> {
         let group = &mut ctx.accounts.group;
         let payer = &ctx.accounts.payer;
 
@@ -61,7 +62,16 @@ pub mod fatira {
         Ok(())
     }
 
-    pub fn remove_user(ctx: Context<AddRemoveUser>, user: Pubkey) -> Result<()> {
+    pub fn approve_user(ctx: Context<ModifyUser>) -> Result<()> {
+        let group = &mut ctx.accounts.group;
+        let payer = ctx.accounts.payer.key();
+
+        group.approve_balance(payer)?;
+
+        Ok(())
+    }
+
+    pub fn remove_user(ctx: Context<ModifyUser>, user: Pubkey) -> Result<()> {
         let group = &mut ctx.accounts.group;
         let payer = &ctx.accounts.payer;
         let admin = group.get_admin().ok_or(error!(ErrorCode::UserDoesNotExist))?;
@@ -69,6 +79,17 @@ pub mod fatira {
         require!(*payer.key() == admin || *payer.key() == user, ErrorCode::UnauthorizedRemove);
 
         group.remove_balance(user)?;
+
+        Ok(())
+    }
+
+    pub fn transfer_admin(ctx: Context<ModifyUser>, user: Pubkey) -> Result<()> {
+        let group = &mut ctx.accounts.group;
+        let payer = &ctx.accounts.payer;
+
+        require_keys_eq!(payer.key(), group.get_admin().ok_or(error!(ErrorCode::UserDoesNotExist))?, ErrorCode::UnauthorizedTransfer);
+
+        group.transfer_admin(user)?;
 
         Ok(())
     }
@@ -110,6 +131,7 @@ pub mod fatira {
         require_keys_eq!(token_program.key(), escrow.owner, ErrorCode::InconsistentTokenPrograms);
         require_keys_eq!(escrow.key(), group.escrow, ErrorCode::InconsistentEscrow);
         require_keys_eq!(payer.key(), sender_account.owner, ErrorCode::InconsistentSenderOwner);
+        require!(!sender_account.is_frozen(), ErrorCode::SenderIsFrozen);
 
         let instruction = spl_transfer(token_program.key(), sender.key(), escrow.key(), payer.key(), &[], amount);
         invoke(&instruction, &[
@@ -151,6 +173,7 @@ pub mod fatira {
         require_keys_eq!(token_program.key(), escrow.owner, ErrorCode::InconsistentTokenPrograms);
         require_keys_eq!(escrow.key(), group.escrow, ErrorCode::InconsistentEscrow);
         require_keys_eq!(payer.key(), recipient_account.owner, ErrorCode::InconsistentRecipientOwner);
+        require!(!recipient_account.is_frozen(), ErrorCode::RecipientIsFrozen);
 
         let (escrow_authority, escrow_bump) = Pubkey::find_program_address(&[b"escrow", group.key().as_ref()], ctx.program_id);
         let signer_seeds: &[&[u8]] = &[b"escrow", group.key().as_ref(), &[escrow_bump]];
@@ -194,7 +217,7 @@ pub struct CreateGroup<'info> {
 }
 
 #[derive(Accounts)]
-pub struct AddRemoveUser<'info> {
+pub struct ModifyUser<'info> {
     #[account(mut)]
     pub group: Account<'info, Group>,
 

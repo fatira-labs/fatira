@@ -85,4 +85,16 @@ pub enum ErrorCode {
 
 	#[msg("Only group admin or the user can remove a user")]
 	UnauthorizedRemove,
+
+	#[msg("The user has not approved the request to join the group")]
+	UserNotApproved,
+
+	#[msg("You are already the admin of this group")]
+	AlreadyAdmin,
+
+	#[msg("The sender is frozen")]
+	SenderIsFrozen,
+
+	#[msg("The recipient is frozen")]
+	RecipientIsFrozen,
 }
