@@ -50,6 +50,29 @@ pub mod fatira {
         Ok(())
     }
 
+    pub fn add_user(ctx: Context<AddRemoveUser>, user: Pubkey) -> Result<()> {
+        let group = &mut ctx.accounts.group;
+        let payer = &ctx.accounts.payer;
+
+        require_keys_eq!(payer.key(), group.get_admin().ok_or(error!(ErrorCode::UserDoesNotExist))?, ErrorCode::UnauthorizedAdd);
+
+        group.add_balance(user, 0)?;
+
+        Ok(())
+    }
+
+    pub fn remove_user(ctx: Context<AddRemoveUser>, user: Pubkey) -> Result<()> {
+        let group = &mut ctx.accounts.group;
+        let payer = &ctx.accounts.payer;
+        let admin = group.get_admin().ok_or(error!(ErrorCode::UserDoesNotExist))?;
+
+        require!(*payer.key() == admin || *payer.key() == user, ErrorCode::UnauthorizedRemove);
+
+        group.remove_balance(user)?;
+
+        Ok(())
+    }
+
     pub fn update_balances(ctx: Context<UpdateBalances>, total_cost: i64, users: Vec<Pubkey>, amounts: Vec<i64>) -> Result<()> {
         let group = &mut ctx.accounts.group;
         let payer = &ctx.accounts.payer;
@@ -168,6 +191,15 @@ pub struct CreateGroup<'info> {
     pub admin: Signer<'info>,
 
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AddRemoveUser<'info> {
+    #[account(mut)]
+    pub group: Account<'info, Group>,
+
+    #[account()]
+    pub payer: Signer<'info>,
 }
 
 #[derive(Accounts)]

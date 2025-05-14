@@ -79,4 +79,10 @@ pub enum ErrorCode {
 
 	#[msg("The instruction requires an admin key")]
 	Unauthorized,
+
+	#[msg("Only group admin can add users")]
+	UnauthorizedAdd,
+
+	#[msg("Only group admin or the user can remove a user")]
+	UnauthorizedRemove,
 }
