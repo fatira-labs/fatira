@@ -29,11 +29,13 @@ export default function SettingScreen({
   onNavigateMoney,
   onNavigateProfile,
 }) {
-    appUsername = "bob";
+   // appUsername = "bob";
   // find the group by id under this user
-  const group = MOCK_USER_GROUPS_DB[userPublicKey].find(g => g.id === currentGroup);
-  const members = group?.members || [];
-
+  console.log(MOCK_USER_GROUPS_DB);
+  let members = [...MOCK_USER_GROUPS_DB.members];
+  console.log(appUsername);
+  console.log(currentGroup);
+  console.log(members[0]);
   // determine owner: first member is appUsername
   const owner = members[0] === appUsername;
 

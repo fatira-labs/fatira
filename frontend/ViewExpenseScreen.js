@@ -21,17 +21,18 @@ let a = 0;
 export default function ViewExpenseScreen({
   onBack,
   currentGroup,
-
+  expense,     
   MOCK_USER_GROUPS_DB,
-  expense,      // [{ date, paidBy, totalAmount, yourShare }]
+  
   onNavigateHome,
   onNavigateAdd,
   onNavigateMoney,
   onNavigateProfile,
 }) {
-  const { date, paidBy, totalAmount, yourShare } = expense[0];
-  console.log(currentGroup);
-  let members = [...MOCK_USER_GROUPS_DB[0].members]
+ console.log(expense);
+ const { date, paidBy, totalAmount, yourShare } = expense;
+  
+  let members = [...MOCK_USER_GROUPS_DB.members]
   let newMembers = members.filter(m => m !== paidBy);
 
   

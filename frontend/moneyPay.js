@@ -23,19 +23,18 @@ let a = 0;
 export default function MoneyPay({
   onBack,
   currentGroup,
-  MOCK_USER_GROUPS_DB,
-  expense,      // [{ date, paidBy, totalAmount, yourShare }]
-  
+  expense,
+  MOCK_USER_GROUPS_DB,      
+  groupBalance,// [{ date, paidBy, totalAmount, yourShare }]
   onNavigateHome,
   onNavigateAdd,
   onNavigateMoney,
   onNavigateProfile,
 }) {
-  const { date, paidBy, totalAmount, yourShare } = expense[0];
-  let members = MOCK_USER_GROUPS_DB[0].members.filter(m => m !== paidBy);
-  a = members.length;
-  
-    console.log(paidBy);
+  let owe = false;
+  if (groupBalance > 0){
+      owe = true;
+  }
   return (
     <View style={styles.container}>
       {/* Pie graphic */}
@@ -48,7 +47,7 @@ export default function MoneyPay({
 
       {/* HEADER */}
      <View style={{height:height*0.02}}></View>
-       {paidBy === "You" ? (
+       {owe ? (
         <View style={{ ...styles.headerRow,justifyContent:'center' }}>
             
              <Text style={styles.groupText}>{currentGroup}  <Text style={styles.dateText}>owes you</Text></Text>
@@ -62,7 +61,7 @@ export default function MoneyPay({
      
        )}
        <View style={styles.redBox}>
-          <Text style={{color:'white',fontSize:125,fontWeight:'bold'}}>${yourShare}</Text>
+          <Text style={{color:'white',fontSize:125,fontWeight:'bold'}}>${Math.abs(groupBalance)}</Text>
        </View>
        <View style={{height:height*0.04}} />
 
@@ -70,7 +69,7 @@ export default function MoneyPay({
      
        <TouchableOpacity  style={{...StyleSheet.absoluteFill}}     onPress={() =>Alert.alert("HELLO WORLD")} activeOpacity={0.7}>
     <Image
-      source={paidBy === "You" ? getImageSource : payImageSource}
+      source={owe  ? getImageSource : payImageSource}
       style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
       resizeMode="contain"
     />

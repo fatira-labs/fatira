@@ -148,7 +148,8 @@ const App = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [userGroups, setUserGroups] = useState([]);
   const [previousScreen, setPreviousScreen] = useState('GroupsScreen'); // To track where to go back from AddExpense
-
+  const [idTransaction, setIdTransaction] = useState(0);
+  
   // Phantom Connect States
   const [dappKeyPair, setDappKeyPair] = useState(null);
   const [userPublicKey, setUserPublicKey] = useState(null);
@@ -179,6 +180,7 @@ const App = () => {
   // --- MOCK DATA ---
   const MOCK_USER_CREDENTIALS = {
     "B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51": "luckenson",
+    "98Z7KX3ZKuAbRshAg6kHf5veVZJae1gkXvBj7tTRQyYN":"shruthik",
     "AnotherWalletKeyForTesting123": "TestUser2",
   };
 
@@ -187,6 +189,11 @@ const App = () => {
       { id: "group_luckenson_1", name: "Colesseum", balance: 20, token: "USDC", members: ["luckenson", "Alice", "Bob"] },
       { id: "group_luckenson_2", name: "ETHDenver", balance: -15, token: "SOL", members: ["luckenson", "Charlie"] },
       { id: "group_luckenson_3", name: "NEXUS", balance: 0, token: "EURC", members: ["luckenson", "David", "Eve"] },
+    ],
+    "98Z7KX3ZKuAbRshAg6kHf5veVZJae1gkXvBj7tTRQyYN":[
+      { id: "group_shruthik_1", name: "GROUP1", balance: 20, token: "USDC", members: ["shruthik", "Alice", "Bob"] },
+      { id: "group_shruthik_2", name: "GROUP2", balance: -15, token: "SOL", members: ["shruthik", "Charlie"] },
+      { id: "group_shruthik_3", name: "GROUP3", balance: 0, token: "EURC", members: ["shruthik", "David", "Eve"] },
     ],
     "AnotherWalletKeyForTesting123": [
       { id: "group_testuser2_1", name: "Gaming Crew", balance: 5, token: "USDC", members: ["TestUser2", "Gamer1"] },
@@ -206,6 +213,14 @@ const App = () => {
     "group_luckenson_3": [],
     "group_testuser2_1": [
       { id: "tx_gaming_1", date: "05/05", title: "New Game Purchase", paidBy: "Gamer1", totalAmount: 70, yourShare: 35, type: "group_expense_involved", fullDetail: "Gamer1 bought a new game for $70" },
+    ],
+    "group_shruthik_1":[
+      { id: "tx_col_1", date: "05/10", title: "Hackathon Pizza", paidBy: "Alice", totalAmount: 60, yourShare: 20, type: "group_expense_involved", fullDetail: "Alice paid $60 for pizzas" },
+      { id: "tx_col_2", date: "05/09", title: "Cloud Credits", paidBy: "You", totalAmount: 25, yourShare: 25, type: "lent", fullDetail: "You paid $25 for cloud credits" },
+    ],
+    "group_shruthik_2": [
+      { id: "tx_ethd_1", date: "04/26", title: "Chipotle", paidBy: "Charlie", totalAmount: 40, yourShare: 20, type: "borrowed", fullDetail: "Charlie paid $40, you owe $20" },
+      { id: "tx_ethd_2", date: "04/20", title: "Uber", paidBy: "You", totalAmount: 15, yourShare: 15, type: "lent", fullDetail: "You paid $15 for Uber" },
     ],
   };
   // --- END MOCK DATA ---
@@ -342,6 +357,7 @@ const App = () => {
   // Navigate to the main page for a selected group
   const handleNavigateToGroupMain = (group) => {
     setPreviousScreen(currentScreen); // Store current screen
+    //console.log("Selected group:", group);
     setSelectedGroup(group);
     setCurrentScreen('GroupMainScreen');
   };
@@ -406,6 +422,23 @@ const App = () => {
     setCurrentScreen('MoneyPage');
   }
   const handleNavProfile = () => {
+   Alert.alert("PROFILE NOT IMPLEMENTED YET");
+  }
+
+  const handleTransactionPage = (transaction,groupName) => {
+    console.log("TRANSACTION CLICEKD: ")
+    console.log(transaction.id);
+   console.log(selectedGroup.id);
+   console.log(groupName);
+    console.log(MOCK_GROUP_TRANSACTIONS[selectedGroup.id])
+  for(let i = 0; i < MOCK_GROUP_TRANSACTIONS[selectedGroup.id].length; i++){
+    if(MOCK_GROUP_TRANSACTIONS[selectedGroup.id][i].id === transaction.id){
+      setIdTransaction(i); // get its index
+      console.log("TRANSACTION CLICEKD: ", i+"  a",MOCK_GROUP_TRANSACTIONS[selectedGroup.id][i]);
+      break;
+    }
+  } 
+   // console.log("TRANSACTION CLICEKD: ")
     setPreviousScreen(currentScreen); // Store current screen
     setCurrentScreen('ViewExpenseScreen');
   }
@@ -444,6 +477,8 @@ const App = () => {
           groupName={selectedGroup.name}
           groupBalance={selectedGroup.balance}
           transactions={MOCK_GROUP_TRANSACTIONS[selectedGroup.id] || []}
+          
+          handleTransactionPage={handleTransactionPage}
           onNavigateToSettings={handleNavGroupSettings}
         
           // BottomNavBar props
@@ -469,10 +504,10 @@ const App = () => {
       {currentScreen === 'ViewExpenseScreen' && userPublicKey && appUsername && (
         <ViewExpenseScreen 
             onBack={handleBackFromAddExpense}
-           
-            currentGroup={"group_luckenson_1"} 
-            expense={MOCK_GROUP_TRANSACTIONS["group_luckenson_1"] || []} // Pass the first transaction for demo
-            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB['B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51']}//// CHANGE THIS TO userPublicKey in the future
+           //come back here
+            currentGroup={selectedGroup.name} 
+            expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey][idTransaction]}//// CHANGE THIS TO userPublicKey in the future
             // BottomNavBar props
             onNavigateHome={handleBackToGroups}
             onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
@@ -482,13 +517,13 @@ const App = () => {
         )}
 
         {currentScreen === 'MoneyPage' && userPublicKey && appUsername && (
+          // money page come back
         <MoneyPage 
             onBack={handleBackFromAddExpense}
-            currentGroup={"group_luckenson_1"} 
-            expense={MOCK_GROUP_TRANSACTIONS["group_luckenson_1"] || []} // Pass the first transaction for demo
-         
-            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB['B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51']}// CHANGE THIS TO userPublicKey in the future
-          
+            currentGroup={selectedGroup.name} 
+            expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey][idTransaction]}//// CHANGE THIS TO userPublicKey in the future
+            groupBalance={selectedGroup.balance}
             // BottomNavBar props
             onNavigateHome={handleBackToGroups}
             onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
@@ -500,11 +535,12 @@ const App = () => {
         {currentScreen === 'SettingScreen' && userPublicKey && appUsername && (
         <SettingScreen 
             onBack={handleBackFromAddExpense}
-            currentGroup={"group_luckenson_1"} 
-            expense={MOCK_GROUP_TRANSACTIONS["group_luckenson_1"] || []} // Pass the first transaction for demo
-            userPublicKey={"B8yQuZiC4Ku6VNuGDLRrUQnVRC4LJFnzGVUC6ArrMk51"} // CHANGE THIS TO userPublicKey in the future
-            appUsername={"luckenson"} // luckenson
-            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB}
+            currentGroup={selectedGroup.name} 
+            expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo
+         
+            userPublicKey={userPublicKey} // CHANGE THIS TO userPublicKey in the future
+            appUsername={appUsername} // luckenson
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey][idTransaction]}//// C
             MOCK_USER_CREDENTIALS={MOCK_USER_CREDENTIALS}
             // BottomNavBar props
             onNavigateHome={handleBackToGroups}

@@ -31,7 +31,9 @@ const GroupMainScreen = ({
   groupName,
   groupBalance, // e.g., 20 or -15
   transactions, // Array of transaction objects
+  handleTransactionPage,
   onNavigateToSettings, // Placeholder for settings navigation
+  
   // Props for BottomNavBar
   onNavigateHome,
   onNavigateAdd,
@@ -41,7 +43,7 @@ const GroupMainScreen = ({
   const balanceText = groupBalance >= 0 ? 'Total owed to you' : 'Total you owe';
   const balanceColor = groupBalance >= 0 ? POSITIVE_BALANCE_COLOR : NEGATIVE_BALANCE_COLOR;
   const displayBalance = groupBalance >= 0 ? `$${groupBalance}` : `-$${Math.abs(groupBalance)}`;
-
+console.log("JENR w: ", transactions)
   // Function to render each transaction item
   const renderTransaction = (transaction, index) => {
     let involvementText = '';
@@ -86,7 +88,7 @@ const GroupMainScreen = ({
 
 
     return (
-      <View key={transaction.id || index} style={styles.transactionBar}>
+      <TouchableOpacity onPress={() => handleTransactionPage(transaction, transaction.id)} key={transaction.id || index} style={styles.transactionBar}>
         <View style={styles.transactionLeft}>
           <Text style={styles.transactionDate}>{transaction.date}</Text>
           <Text style={styles.transactionTitle}>{transaction.title}</Text>
@@ -96,11 +98,11 @@ const GroupMainScreen = ({
           <Text style={styles.transactionInvolvement}>{involvementText}</Text>
           {transaction.amount !== '' && (
             <Text style={[styles.transactionAmount, { color: amountColor }]}>
-              {transaction.type === 'borrowed' || (transaction.type === 'paid_to_group' && transaction.paidBy === 'You') ? '-' : ''}{amountPrefix}{Math.abs(transaction.yourShare || transaction.amount)}
+              {transaction.type === 'borrowed' || (transaction.type === 'paid_to_group' && transaction.paidBy === 'You') ? '-' : ''}{amountPrefix}{Math.abs(transaction.totalAmount)}
             </Text>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
