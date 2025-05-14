@@ -18,7 +18,7 @@ const { width, height } = Dimensions.get('window');
 const backArrowAsset = require('./assets/backbutton.png');
 const topPieAsset    = require('./assets/toppie1.png');
 const getImageSource = require('./assets/getLogoBtn.png');
-const payImageSource = require('./assets/payLogoBtn.png');
+const payImageSource = require('./assets/pay.png');
 let a = 0;
 export default function MoneyPay({
   onBack,
