@@ -23,7 +23,7 @@ pub enum ErrorCode {
 	#[msg("An invalid escrow account was provided")]
 	InvalidEscrowAccount,
 
-	#[msg("The currency account and escrow account are owned by different programs")]
+	#[msg("Two token accounts are owned by different token programs")]
 	InconsistentTokenPrograms,
 
 	#[msg("The escrow owner does not match the group PDA")]
@@ -41,9 +41,21 @@ pub enum ErrorCode {
 	#[msg("Lengths of users and amounts do not match")]
 	InconsistentBalanceLengths,
 
-	#[msg("Negative amounts are not allowed")]
-	AmountIsNegative,
+	#[msg("Negative and zero amounts are not allowed")]
+	AmountIsNotPositive,
 
 	#[msg("An overflow occurred when modifying the balance")]
-	AmountOverflow
+	AmountOverflow,
+
+	#[msg("An invalid sender account was provided")]
+	InvalidSenderAccount,
+
+	#[msg("The sender mint does not match the currency mint")]
+	InconsistentSenderMint,
+
+	#[msg("The provided escrow account does not match the group escrow account")]
+	InconsistentEscrow,
+
+	#[msg("The transfer between token accounts failed")]
+	TransferFailed
 }
