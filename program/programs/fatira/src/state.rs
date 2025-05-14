@@ -13,17 +13,28 @@ pub struct Group {
 pub struct UserBalance {
 	pub user: Pubkey,
 	pub balance: i64,
+	pub approved: bool,
 }
 
 impl Group {
 	pub fn add_balance(&mut self, user: Pubkey, balance: i64) -> Result<()> {
-		if self.balances.len() >= MAX_GROUP_USERS {
-			return Err(error!(ErrorCode::GroupAtCapacity))
-		}
-		if self.balances.iter().any(|bal| bal.user == user) {
-			return Err(error!(ErrorCode::UserAlreadyExists));
-		}
-		self.balances.push(UserBalance { user, balance });
+		require!(self.balances.len() < MAX_GROUP_USERS, ErrorCode::GroupAtCapacity);
+		require!(!self.balances.iter().any(|bal| bal.user == user), ErrorCode::UserAlreadyExists);
+
+		self.balances.push(UserBalance {
+			user,
+			balance,
+			approved: false,
+		});
+
+		Ok(())
+	}
+
+	pub fn approve_balance(&mut self, user: Pubkey) -> Result<()> {
+		let balance = self.balances.iter_mut().find(|bal| bal.user == user).ok_or(error!(ErrorCode::UserDoesNotExist))?;
+		
+		balance.approved = true;
+		
 		Ok(())
 	}
 
@@ -32,18 +43,14 @@ impl Group {
 	}
 
 	pub fn remove_balance(&mut self, user: Pubkey) -> Result<()> {
-		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
-			if i == 0 {
-				return Err(error!(ErrorCode::CannotRemoveAdmin))
-			}
-			if self.balances[i].balance != 0 {
-				return Err(error!(ErrorCode::UserBalanceNonZero));
-			}
-			self.balances.remove(i);
-			Ok(())
-		} else {
-			Err(error!(ErrorCode::UserDoesNotExist))
-		}
+		let i = self.balances.iter().position(|bal| bal.user == user).ok_or(error!(ErrorCode::UserDoesNotExist))?;
+		
+		require!(i != 0, ErrorCode::CannotRemoveAdmin);
+		require!(self.balances[i].balance == 0, ErrorCode::UserBalanceNonZero);
+
+		self.balances.remove(i);
+
+		Ok(())
 	}
 
 	pub fn get_admin(&self) -> Option<Pubkey> {
@@ -51,24 +58,25 @@ impl Group {
 	}
 
 	pub fn transfer_admin(&mut self, user: Pubkey) -> Result<()> {
-		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
-			if i == 0 {
-				return Ok(())
-			}
-			self.balances.swap(0, i);
-			Ok(())
-		} else {
-			Err(error!(ErrorCode::UserDoesNotExist))
-		}
+		let i = self.balances.iter().position(|bal| bal.user == user).ok_or(error!(ErrorCode::UserDoesNotExist))?;
+
+		require!(i != 0, ErrorCode::AlreadyAdmin);
+		require!(self.balances[i].approved, ErrorCode::UserNotApproved);
+
+		self.balances.swap(0, i);
+
+		Ok(())
 	}
 
 	pub fn change_balance(&mut self, user: Pubkey, amount: i64) -> Result<()> {
-		if let Some(i) = self.balances.iter().position(|bal| bal.user == user) {
-			let new_balance = self.balances[i].balance.checked_add(amount).ok_or(error!(ErrorCode::AmountOverflow))?;
-			self.balances[i].balance = new_balance;
-			Ok(())
-		} else {
-			Err(error!(ErrorCode::UserDoesNotExist))
-		}
+		let i = self.balances.iter().position(|bal| bal.user == user).ok_or(error!(ErrorCode::UserDoesNotExist))?;
+		let user_balance = &mut self.balances[i];
+
+		require!(user_balance.approved, ErrorCode::UserNotApproved);
+
+		let new_balance = user_balance.balance.checked_add(amount).ok_or(error!(ErrorCode::AmountOverflow))?;
+		user_balance.balance = new_balance;
+
+		Ok(())
 	}
 }

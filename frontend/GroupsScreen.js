@@ -27,11 +27,7 @@ const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup, onSelectGrou
   return (
     <View style={styles.groupsScreenContainer}>
       <Image source={topPieAsset} style={styles.topPieImage} resizeMode="contain" />
-      {/* Re-enabled Logout Button - comment out if not needed */}
-      {/* <TouchableOpacity style={styles.logoutButtonPlacement} onPress={onLogout}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
-      </TouchableOpacity> */}
-
+    
       <Text style={styles.groupsTitle}>{username}'s groups:</Text>
       <ScrollView style={styles.groupsListContainer} contentContainerStyle={styles.groupsListContentContainer}>
         {userGroups && userGroups.length > 0 ? (

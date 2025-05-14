@@ -1,11 +1,25 @@
 import express from "express";
 import Expense from "../Expense.js";
+import { createUpdateBalancesTransaction } from "../utils/solana.js";
+
 
 const router = express.Router();
 
 router.post("/newExpense", async (req, res) => {
     try {
         const {group, name, description, totalCost, payee, payers, amounts} = req.body;
+
+        // Filter out zero amounts and their corresponding payers
+        const nonZeroIndices = amounts.map((amount, index) => ({ amount, index }))
+            .filter(item => item.amount > 0);
+        
+        
+        if (payers.length === 0) {
+            return res.status(400).json({message: "At least one payer must have a non-zero amount"});
+        }
+
+        amounts = nonZeroIndices.map(item => item.amount);
+        payers = nonZeroIndices.map(item => payers[item.index]);
 
         if (!group || !name || !description || !totalCost || !payee || !payers || !amounts) {
             return res.status(400).json({message: "Missing required fields"});
@@ -54,17 +68,6 @@ router.post("/newExpense", async (req, res) => {
             }
         }
         const decimalAmounts = amounts.map(amount => new Decimal128(amount));
-        
-        // Filter out zero amounts and their corresponding payers
-        const nonZeroIndices = amounts.map((amount, index) => ({ amount, index }))
-            .filter(item => item.amount > 0);
-        
-        amounts = nonZeroIndices.map(item => item.amount);
-        payers = nonZeroIndices.map(item => payers[item.index]);
-        
-        if (payers.length === 0) {
-            return res.status(400).json({message: "At least one payer must have a non-zero amount"});
-        }
 
         const amountSum = amounts.reduce((sum, amount) => sum + amount, 0);
         if (amountSum !== totalCost) {
@@ -82,7 +85,27 @@ router.post("/newExpense", async (req, res) => {
             amounts: decimalAmounts
         });
         await newExpense.save();
-        res.status(201).json({message: "Expense created successfully", expense: newExpense});
+        // res.status(201).json({message: "Expense created successfully", expense: newExpense});
+
+        try {
+            const { transaction, backendPublicKey } = await createUpdateBalancesTransaction(
+                group,
+                totalCost,
+                payers,
+                amounts
+            );
+
+            res.status(201).json({
+                message: "Expense and transaction created successfully",
+                expense: newExpense,
+                transaction,
+                backendPublicKey
+            })
+
+        } catch (solanaError) {
+            console.error('Error in creating Solana transaction:', solanaError);
+            res.status(500).json({message: "Solana transaction failed"});
+        }
 
     } catch (error) {
         console.error('Error in expense creation:', error);
@@ -92,4 +115,3 @@ router.post("/newExpense", async (req, res) => {
 
 export default router;
 
-// TODO: make onchain transaction to update balances in group, prolly call a function in program directory
