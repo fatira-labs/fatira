@@ -142,7 +142,8 @@ const AddExpenseScreen = ({
 
   // Updated to open the SplitExpenseScreen modal
   const handleOpenSplitModal = () => {
-    const amount = parseFloat(totalAmount);
+    let amount = parseFloat(totalAmount);
+    amount = parseFloat(amount.toFixed(2)); // Ensure two decimal places
     if (isNaN(amount) || amount <= 0) {
       Alert.alert('Enter Amount First', 'Please enter a valid total amount for the expense before splitting.');
       return;
@@ -173,7 +174,8 @@ const AddExpenseScreen = ({
       Alert.alert('Error', 'Please enter an expense name.');
       return;
     }
-    const amount = parseFloat(totalAmount);
+    let amount = parseFloat(totalAmount);
+    amount = parseFloat(amount.toFixed(2)); // Ensure two decimal places
     if (isNaN(amount) || amount <= 0) {
       Alert.alert('Error', 'Please enter a valid total amount.');
       return;
@@ -247,8 +249,8 @@ const AddExpenseScreen = ({
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={onDateChange}
               maximumDate={new Date()} // Users can't select future dates for expenses
-              // textColor="#FFFFFF" // textColor for DateTimePicker is not universally supported
-              // themeVariant="dark" // For a dark theme if supported by the native picker
+               textColor="#FFFFFF" // textColor for DateTimePicker is not universally supported
+              //themeVariant="dark" // For a dark theme if supported by the native picker
             />
           )}
 

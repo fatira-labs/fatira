@@ -23,7 +23,7 @@ let a = 0;
 export default function MoneyPay({
   onBack,
   currentGroup,
-  expense,
+
   MOCK_USER_GROUPS_DB,      
   groupBalance,// [{ date, paidBy, totalAmount, yourShare }]
   onNavigateHome,
@@ -31,6 +31,10 @@ export default function MoneyPay({
   onNavigateMoney,
   onNavigateProfile,
 }) {
+  // round to 2 decimal places
+  
+  groupBalance = parseFloat(groupBalance); // Ensure groupBalance is a number
+  groupBalance = Math.round(groupBalance * 100) / 100;
   let owe = false;
   if (groupBalance > 0){
       owe = true;
@@ -61,7 +65,7 @@ export default function MoneyPay({
      
        )}
        <View style={styles.redBox}>
-          <Text style={{color:'white',fontSize:125,fontWeight:'bold'}}>${Math.abs(groupBalance)}</Text>
+          <Text style={{color:'white',fontSize:80,fontWeight:'bold'}}>${Math.abs(groupBalance)}</Text>
        </View>
        <View style={{height:height*0.04}} />
 

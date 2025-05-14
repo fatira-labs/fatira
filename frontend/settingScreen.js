@@ -11,15 +11,18 @@ import {
   Alert,
 } from 'react-native';
 import BottomNavBar from './BottomNavBar';
-
+import { Image } from 'expo-image';
 const { width, height } = Dimensions.get('window');
 const TRANSACTION_BAR_BACKGROUND = '#F0A829';
 const ICON_SIZE = 50;
-
+const backArrowAsset = require('./assets/backbutton.png');
 export default function SettingScreen({
   onBack,
   currentGroup,
-  expense,
+
+
+  selectedGroup,
+  
   userPublicKey,
   appUsername,
   MOCK_USER_GROUPS_DB,
@@ -31,12 +34,19 @@ export default function SettingScreen({
 }) {
    // appUsername = "bob";
   // find the group by id under this user
-  console.log(MOCK_USER_GROUPS_DB);
-  let members = [...MOCK_USER_GROUPS_DB.members];
-  console.log(appUsername);
-  console.log(currentGroup);
-  console.log(members[0]);
+  console.log(selectedGroup);
+  let members = [];
+  for(let i = 0;i<MOCK_USER_GROUPS_DB.length;i++){
+    if(MOCK_USER_GROUPS_DB[i].id === selectedGroup){
+      members = MOCK_USER_GROUPS_DB[i].members;
+      break;
+    }
+  }
+
+ 
+  
   // determine owner: first member is appUsername
+
   const owner = members[0] === appUsername;
 
   const handleRemove = (member) => Alert.alert(`Remove ${member}?`);
@@ -48,6 +58,11 @@ export default function SettingScreen({
       <View style={styles.headerBar}>
         <Text style={styles.headerText}>{currentGroup}</Text>
       </View>
+
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+              <Image source={backArrowAsset} style={styles.backIcon} resizeMode="contain" />
+            </TouchableOpacity>
+      
 
       {/* Members list */}
       <ScrollView contentContainerStyle={styles.listContainer}>
@@ -161,5 +176,17 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  backButton: {
+    position: 'absolute',
+    top: height * 0.04,
+    left: width * 0.02,
+    zIndex: 10,
+    padding: 8,
+  },
+  backIcon: {
+    width: width * 0.2,
+    height: width * 0.2,
+    transform: [{ rotate: '180deg' }],
   },
 });

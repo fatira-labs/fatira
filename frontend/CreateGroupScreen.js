@@ -180,13 +180,14 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
         animationType="fade"
         onRequestClose={() => setTokenModalVisible(false)}
       >
+      
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setTokenModalVisible(false)}>
           <View style={styles.modalContent}>
             {TOKEN_OPTIONS.map((token) => (
               <TouchableOpacity key={token} style={styles.modalOption} onPress={() => handleTokenSelect(token)}>
                 <Text style={styles.modalOptionText}>{token}</Text>
               </TouchableOpacity>
-            ))}
+            ))}            
           </View>
         </TouchableOpacity>
       </Modal>

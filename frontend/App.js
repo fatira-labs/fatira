@@ -33,7 +33,7 @@ import AddExpenseScreen from './AddExpenseScreen'; // Import the new AddExpenseS
 import ViewExpenseScreen from './ViewExpenseScreen';
 import SettingScreen from './settingScreen.js';
 import MoneyPage from "./moneyPay.js";
-
+import ProfilePage from "./ProfilePage.js";
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
@@ -442,7 +442,8 @@ const App = () => {
     setCurrentScreen('MoneyPage');
   }
   const handleNavProfile = () => {
-   Alert.alert("PROFILE NOT IMPLEMENTED YET");
+    setPreviousScreen(currentScreen); // Store current screen
+    setCurrentScreen('ProfilePage');
   }
 
   const handleTransactionPage = (transaction,groupName) => {
@@ -541,7 +542,7 @@ const App = () => {
         <MoneyPage 
             onBack={handleBackFromAddExpense}
             currentGroup={selectedGroup.name} 
-            expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo
+         //   expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo
             MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey][idTransaction]}//// CHANGE THIS TO userPublicKey in the future
             groupBalance={selectedGroup.balance}
             // BottomNavBar props
@@ -556,11 +557,12 @@ const App = () => {
         <SettingScreen 
             onBack={handleBackFromAddExpense}
             currentGroup={selectedGroup.name} 
-            expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo
-         
+          
+            selectedGroup={selectedGroup.id}
+        
             userPublicKey={userPublicKey} // CHANGE THIS TO userPublicKey in the future
             appUsername={appUsername} // luckenson
-            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey][idTransaction]}//// C
+            MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey]}//// C
             MOCK_USER_CREDENTIALS={MOCK_USER_CREDENTIALS}
             // BottomNavBar props
             onNavigateHome={handleBackToGroups}
@@ -569,6 +571,21 @@ const App = () => {
             onNavigateProfile={handleNavProfile}
         />
         )}
+        {currentScreen === 'ProfilePage' && userPublicKey && appUsername && (
+        <ProfilePage
+          onBack={handleBackFromAddExpense}
+          currentGroup={selectedGroup.name}
+          userPublicKey={userPublicKey}
+  MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey]}//// CHANGE THIS TO userPublicKey in the future
+  MOCK_USER_CREDENTIALS={MOCK_USER_CREDENTIALS}
+  
+  onNavigateHome={handleBackToGroups}
+  onNavigateAdd={() => setCurrentScreen('AddExpenseScreen')} // Or handleNavigateToAddExpense
+  onNavigateMoney={handleNavMoney}
+  onNavigateProfile={handleNavProfile}
+  />
+        )}
+        
       
 
       {/* Fallback Screens */}

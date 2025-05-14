@@ -40,6 +40,9 @@ const GroupMainScreen = ({
   onNavigateMoney,
   onNavigateProfile,
 }) => {
+  groupBalance = parseFloat(groupBalance); // Ensure groupBalance is a number
+  // round to 2 decimal places
+  groupBalance = Math.round(groupBalance * 100) / 100;
   const balanceText = groupBalance >= 0 ? 'Total owed to you' : 'Total you owe';
   const balanceColor = groupBalance >= 0 ? POSITIVE_BALANCE_COLOR : NEGATIVE_BALANCE_COLOR;
   const displayBalance = groupBalance >= 0 ? `$${groupBalance}` : `-$${Math.abs(groupBalance)}`;
