@@ -56,10 +56,10 @@ pub mod fatira {
         require_eq!(users.len(), amounts.len(), ErrorCode::InconsistentBalanceLengths);
         require!(total_cost > 0, ErrorCode::AmountIsNotPositive);
 
-        group.change_balance(payer.key(), -1 * total_cost)?;
+        group.change_balance(payer.key(), total_cost)?;
         for (i, amount) in amounts.iter().enumerate() {
             require!(*amount > 0, ErrorCode::AmountIsNotPositive);
-            group.change_balance(users[i], *amount)?;
+            group.change_balance(users[i], -*amount)?;
         }
 
         Ok(())
@@ -99,7 +99,7 @@ pub mod fatira {
             error!(ErrorCode::TransferFailed)
         })?;
 
-        group.change_balance(payer.key(), -1 * (amount as i64));
+        group.change_balance(payer.key(), amount as i64);
 
         Ok(())
     }
