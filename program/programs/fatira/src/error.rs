@@ -57,5 +57,23 @@ pub enum ErrorCode {
 	InconsistentEscrow,
 
 	#[msg("The transfer between token accounts failed")]
-	TransferFailed
+	TransferFailed,
+
+	#[msg("An invalid recipient account was provided")]
+	InvalidRecipientAccount,
+
+	#[msg("The recipient mint does not match the currency mint")]
+	InconsistentRecipientMint,
+
+	#[msg("The owner of the sender account does not match the payer")]
+	InconsistentSenderOwner,
+
+	#[msg("The owner of the recipient account does not match the payer")]
+	InconsistentRecipientOwner,
+
+	#[msg("The user does not have a sufficient balance to process this withdrawal")]
+	InsufficientUserBalance,
+
+	#[msg("The escrow does not have a sufficient balance to process this withdrawal")]
+	InsufficientEscrowBalance,
 }

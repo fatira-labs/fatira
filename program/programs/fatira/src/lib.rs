@@ -10,7 +10,6 @@ use crate::state::{Group};
 use crate::error::{ErrorCode};
 use crate::constants::{GROUP_SIZE, MAX_GROUP_USERS};
 
-
 declare_id!("ftra545Ysk9H9HjvhfqXh5xP5PTQTC1KV3rk4AADXeC");
 
 #[program]
@@ -83,15 +82,9 @@ pub mod fatira {
         require_eq!(sender.owner, token_program.key(), ErrorCode::InconsistentTokenPrograms);
         require_eq!(escrow.owner, token_program.key(), ErrorCode::InconsistentTokenPrograms);
         require_eq!(escrow.key(), group.escrow, ErrorCode::InconsistentEscrow);
+        require_eq!(sender_account.owner, payer.key(), ErrorCode::InconsistentSenderOwner);
 
-        let instruction = spl_transfer(
-            &token_program.key(),
-            &sender.key(),
-            &escrow.key(),
-            &payer.key(),
-            &[],
-            amount
-        );
+        let instruction = spl_transfer(&token_program.key(), &sender.key(), &escrow.key(), &payer.key(), &[], amount);
         invoke(&instruction, &[
             sender.to_account_info(), escrow.to_account_info(), payer.to_account_info(), token_program.to_account_info()
         ]).map_err(|e| {
@@ -100,6 +93,51 @@ pub mod fatira {
         })?;
 
         group.change_balance(payer.key(), amount as i64);
+
+        Ok(())
+    }
+
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        let group = &mut ctx.accounts.group;
+        let recipient = &ctx.accounts.recipient;
+        let escrow = &ctx.accounts.escrow;
+        let payer = &ctx.accounts.payer;
+        let token_program = &ctx.accounts.token_program;
+
+        let balance = group.get_balance(recipient.key()).ok_or(error!(ErrorCode::UserDoesNotExist))?;
+        let recipient_data = &recipient.try_borrow_data()?;
+        let recipient_account = SplAccount::unpack(recipient_data).map_err(|e| {
+            msg!("Failed to unpack recipient account: {:?}", e);
+            error!(ErrorCode::InvalidRecipientAccount)
+        })?;
+        let escrow_data = &escrow.try_borrow_data()?;
+        let escrow_account = SplAccount::unpack(escrow_data).map_err(|e| {
+            msg!("Failed to unpack escrow account: {:?}", e);
+            error!(ErrorCode::InvalidEscrowAccount)
+        })?;
+
+        require!(amount > 0, ErrorCode::AmountIsNotPositive);
+        require!(balance > 0, ErrorCode::AmountIsNotPositive);
+        require!(balance >= (amount as i64), ErrorCode::InsufficientUserBalance);
+        require!(escrow_account.amount >= amount, ErrorCode::InsufficientEscrowBalance);
+        require_eq!(recipient_account.mint, group.currency, ErrorCode::InconsistentRecipientMint);
+        require_eq!(recipient.owner, token_program.key(), ErrorCode::InconsistentTokenPrograms);
+        require_eq!(escrow.owner, token_program.key(), ErrorCode::InconsistentTokenPrograms);
+        require_eq!(escrow.key(), group.escrow, ErrorCode::InconsistentEscrow);
+        require_eq!(recipient_account.owner, payer.key(), ErrorCode::InconsistentRecipientOwner);
+
+        let (escrow_authority, escrow_bump) = Pubkey::find_program_address(&[b"escrow", group.key().as_ref()], ctx.program_id);
+        let signer_seeds: &[&[u8]] = &[b"escrow", group.key().as_ref(), &[escrow_bump]];
+
+        let instruction = spl_transfer(&token_program.key(), &escrow.key(), &recipient.key(), &escrow_authority.key(), &[], amount);
+        invoke_signed(&instruction, &[
+            escrow.to_account_info(), recipient.to_account_info(), token_program.to_account_info()
+        ], &[signer_seeds]).map_err(|e| {
+            msg!("Failed to invoke transfer instruction: {:?}", e);
+            error!(ErrorCode::TransferFailed)
+        })?;
+
+        group.change_balance(payer.key(), -(amount as i64))?;
 
         Ok(())
     }
@@ -143,6 +181,27 @@ pub struct Deposit<'info> {
     /// CHECK: verify that sender is a valid token account with the correct mint
     #[account(mut)]
     pub sender: AccountInfo<'info>,
+
+    /// CHECK: verify that escrow is a valid token account with the correct mint and matches the group escrow
+    #[account(mut)]
+    pub escrow: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    /// CHECK: verify that the token program matches the sender and escrow
+    pub token_program: AccountInfo<'info>,
+
+}
+
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub group: Account<'info, Group>,
+
+    /// CHECK: verify that recipient is a valid token account with the correct mint
+    #[account(mut)]
+    pub recipient: AccountInfo<'info>,
 
     /// CHECK: verify that escrow is a valid token account with the correct mint and matches the group escrow
     #[account(mut)]
