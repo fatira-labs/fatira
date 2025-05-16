@@ -11,7 +11,7 @@ const BAR_HEIGHT = 90;
 const homeIcon    = require('./assets/homeNavBar.png');
 const addIcon     = require('./assets/pieplus.png');
 const moneyIcon   = require('./assets/moneyNavBar.png');
-const profileIcon = require('./assets/profileNavBar.png');
+const profileIcon = require('./assets/piesettings.png');
 
 const BottomNavBar = ({ active, onNavigateHome, onNavigateAdd, onNavigateMoney, onNavigateProfile }) => {
   const buttonData = [

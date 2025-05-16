@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     marginTop: height * 0.1,
     marginBottom: 12,
   },
-  dateText: { color: '#FFF', fontSize: 20 },
+  dateText: { color: '#D4A32A', fontSize: 20 },
   groupText: { color: '#D4A32A', fontSize: 20, fontWeight: 'bold' },
 
   payerRow: {
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
 
   text: { fontSize: 20 },
   paid: { color: '#3CB043', fontWeight: '600' },
-  owed: { color: '#D2222D' },
+  owed: { color: 'white' },
 
   receipt: {
     width: '90%',

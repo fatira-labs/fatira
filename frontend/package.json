@@ -9,6 +9,10 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/material": "^7.1.0",
     "@phantom/react-native-wallet-sdk": "^0.0.35",
     "@privy-io/expo": "^0.51.0",
     "@react-native-community/datetimepicker": "^8.3.0",
@@ -26,6 +30,7 @@
     "install": "^0.13.0",
     "npm": "^11.3.0",
     "react": "19.0.0",
+    "react-icons": "^5.5.0",
     "react-native": "^0.79.2",
     "react-native-get-random-values": "^1.11.0",
     "react-native-safe-area-context": "5.4.0",

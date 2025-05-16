@@ -16,7 +16,7 @@ import { Image } from 'expo-image';
 import BottomNavBar from './BottomNavBar'; // Import the BottomNavBar
 
 const { width, height } = Dimensions.get('window');
-
+import {FontAwesome} from '@expo/vector-icons';
 // --- Asset Imports ---
 const settingsIcon = require('./assets/piesettings.png');
 
@@ -116,7 +116,7 @@ console.log("JENR w: ", transactions)
         <View style={styles.headerContainer}>
           <Text style={styles.groupNameText}>{groupName || 'Group Details'}</Text>
           <TouchableOpacity onPress={onNavigateToSettings} style={styles.settingsButton}>
-            <Image source={settingsIcon} style={styles.settingsIcon} resizeMode="contain" />
+            <FontAwesome  color={colors.GROUP_BAR_BACKGROUND_COLOR} name="user-circle" size={50} style={styles.settingsIcon} resizeMode="contain" />
           </TouchableOpacity>
         </View>
 
@@ -174,9 +174,9 @@ const styles = StyleSheet.create({
     padding: 5, // Easier to tap
   },
   settingsIcon: {
-    width: width * 0.175,
-    height: width * 0.175,
-    marginTop: 0,
+    width: width * 0.13,
+    height: width * 0.15,
+    
   },
   balanceContainer: {
     flexDirection: 'row',
@@ -202,8 +202,9 @@ const styles = StyleSheet.create({
   },
   transactionHistoryTitle: {
     fontSize: width * 0.05,
+    fontFamily:"Open Sans",
     color: '#FFFFFF',
-    fontWeight: 'bold',
+   // fontWeight: 'bold',
     textAlign:'center',
     paddingHorizontal: width * 0.05,
     marginBottom: height * 0.015,

@@ -446,7 +446,7 @@ const App = () => {
    
     setCurrentScreen('MoneyPage');
   }
-  const handleNavProfile = () => {
+  const handleNavGroupSettings = () => {
     setPreviousScreen(currentScreen); // Store current screen
     setCurrentScreen('ProfilePage');
   }
@@ -475,7 +475,7 @@ const App = () => {
     setPreviousScreen(currentScreen); // Store current screen
     setCurrentScreen('ViewExpenseScreen');
   }
-  const handleNavGroupSettings = () => {
+  const handleNavProfile = () => {
     setPreviousScreen(currentScreen); // Store current screen
     setCurrentScreen('SettingScreen');
   }
@@ -503,6 +503,7 @@ const App = () => {
           onBack={handleBackToGroups}
           onCreateGroup={handleCreateGroup}
           currentUsername={appUsername}
+             MOCK_USER_GROUPS_DB={MOCK_USER_GROUPS_DB[userPublicKey]}
         />
       )}
       {currentScreen === 'GroupMainScreen' && selectedGroup && userPublicKey && appUsername && (

@@ -217,7 +217,7 @@ const AddExpenseScreen = ({
       <Text style={styles.pageTitle}>Add Expense</Text>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContentContainer}>
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Name:</Text>
+          <Text style={styles.label}>Name</Text>
           <TextInput
             style={[styles.inputBar, styles.textInput]}
             placeholder="e.g., Dinner, Groceries, Uber"
@@ -226,7 +226,7 @@ const AddExpenseScreen = ({
             onChangeText={setExpenseName}
           />
 
-          <Text style={styles.label}>Total $:</Text>
+          <Text style={styles.label}>Total $</Text>
           <TextInput
             style={[styles.inputBar, styles.textInput]}
             placeholder="0.00"

@@ -31,14 +31,14 @@ const GROUP_BAR_BORDER_COLOR = colors.GROUP_BAR_BORDER_COLOR; // C97108 with 80%
 
 const inputHeight = height * 0.055;
 
-const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
+const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername ,MOCK_USER_GROUPS_DB}) => {
   const [groupTitle, setGroupTitle] = useState('');
   const [selectedToken, setSelectedToken] = useState(TOKEN_OPTIONS[0]);
   const [customTokenAddress, setCustomTokenAddress] = useState('');
   const [isTokenModalVisible, setTokenModalVisible] = useState(false);
   const [memberUsernameInput, setMemberUsernameInput] = useState('');
   const [members, setMembers] = useState([]); // Start with the creator as the first member
-
+console.log(MOCK_USER_GROUPS_DB)
   // Add creator to members list automatically on mount or when currentUsername is available
   useState(() => {
     if (currentUsername && !members.some(member => member.username === currentUsername)) {
@@ -113,7 +113,8 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
         {/* Group Title Input */}
         <TextInput
           style={[styles.inputBar, styles.textInput]}
-          placeholder="Group Title"
+          placeholder="Enter Group Name"
+         
             placeholderTextColor="black"
           value={groupTitle}
           onChangeText={setGroupTitle}
@@ -128,7 +129,7 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
         {selectedToken === 'Custom' && (
           <TextInput
             style={[styles.inputBar, styles.textInput, { marginTop: 10 }]}
-            placeholder="Enter Custom Token Address"
+            placeholder="Custom Token Name"
               placeholderTextColor="black"
             value={customTokenAddress}
             onChangeText={setCustomTokenAddress}
@@ -156,7 +157,8 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
         {members.length > 0 && (
           <View style={styles.membersList}>
             {members.map((member) => (
-              <View key={member.id} style={[styles.inputBar, styles.memberListItem]}>
+              <View key={member.id} style={{...styles.inputBar,... styles.memberListItem,borderColor:colors.WHITE,
+    borderBottomWidth:0.5,}}>
                 <Text style={styles.memberText}>{member.username[0].toUpperCase()+member.username.slice(1)}</Text>
                 {member.username.toLowerCase() !== currentUsername.toLowerCase() && (
                     <TouchableOpacity onPress={() => handleRemoveMember(member.id)}>
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
     top: Platform.OS === 'ios' ? height * 0.04 : height * 0.04,
     left: width * 0.01,
     zIndex: 10,
-    padding: 10,
+  //  padding: 10,
   },
   backArrowIcon: {
     width: width * 0.2, // Adjust size as needed
@@ -236,7 +238,7 @@ const styles = StyleSheet.create({
     maxHeight: height * 0.5, // Adjust to leave space for create button
   },
   formContentContainer: {
-    paddingBottom: height * 0.22, // Ensure space for the absolute positioned create button
+   // paddingBottom: height * 0.22, // Ensure space for the absolute positioned create button
   },
   label: {
     fontSize: width * 0.045,
@@ -248,12 +250,11 @@ const styles = StyleSheet.create({
   },
   inputBar: {
     backgroundColor: GROUP_BAR_BACKGROUND_COLOR,
-    borderColor: GROUP_BAR_BORDER_COLOR,
-    borderWidth: 2, // Slightly thinner border than group bars for differentiation
-    borderRadius: 10,
+    
+   borderRadius: 10,
     paddingVertical: height * 0.015,
     paddingHorizontal: width * 0.04,
-    marginBottom: height * 0.015,
+   //marginBottom: height * 0.015,
     flexDirection: 'row', // For member list items
     justifyContent: 'space-between', // For member list items
     alignItems: 'center', // For member list items
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
   addMemberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: height * 0.01,
+  //  marginBottom: height * 0.01,
   },
   memberInput: {
     flex: 1,
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 10,
     paddingHorizontal: width * 0.04,
-    color: '#FFFFFF',
+    color: 'black',
     fontSize: width * 0.04,
   },
   addMemberButton: {
@@ -299,21 +300,26 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
   },
   membersList: {
-    marginTop: height * 0.01,
+    marginTop: height * 0.05,
+    borderTopWidth:0.5,
+    borderTopColor:colors.WHITE
   },
   memberListItem: {
     //rgba(235, 188, 93, 0.95) 
-    backgroundColor: colors.MEMBERS_LIST, // Lighter orange for member list holders
+    backgroundColor: "#1A1A1A", // Lighter orange for member list holders
   },
   memberText: {
-    color: colors.BLACK, // Dark text on the orange bar
-    fontSize: width * 0.04,
+    color: colors.WHITE, // Dark text on the orange bar
+    fontSize: 15,
     fontWeight: '500',
+    fontFamily:'AmaticBold'
+    
   },
   removeMemberText: {
     color: colors.REMOVE_BTN_COLOR, // A red color for removal
     fontSize: width * 0.035,
     fontWeight: 'bold',
+    
   },
   createButtonContainer: {
     position: 'absolute',
@@ -334,7 +340,7 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#2C2C2C', // Dark modal background
     borderRadius: 10,
-    paddingVertical: height * 0.02,
+   // paddingVertical: height * 0.02,
     width: width * 0.8,
     maxHeight: height * 0.5,
     borderWidth: 1,
@@ -343,7 +349,7 @@ const styles = StyleSheet.create({
   modalOption: {
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.05,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderBottomColor: '#444444',
   },
   modalOptionText: {
