@@ -97,20 +97,21 @@ pub mod fatira {
         Ok(())
     }
 
-    pub fn update_balances(ctx: Context<UpdateBalances>, total_cost: i64, users: Vec<Pubkey>, amounts: Vec<i64>) -> Result<()> {
+    pub fn update_balances(ctx: Context<UpdateBalances>, users: Vec<Pubkey>, amounts: Vec<u64>) -> Result<()> {
         let group = &mut ctx.accounts.group;
         let payer = &ctx.accounts.payer;
         let admin = &ctx.accounts.admin;
         let admin_pubkey = Pubkey::from_str(ADMIN_PUBKEY).unwrap();
+        let total_cost: u64 = amounts.iter().sum();
 
         require_keys_eq!(admin.key(), admin_pubkey, ErrorCode::Unauthorized);
         require_eq!(users.len(), amounts.len(), ErrorCode::InconsistentBalanceLengths);
         require!(total_cost > 0, ErrorCode::AmountIsNotPositive);
 
-        group.change_balance(payer.key(), total_cost)?;
+        group.change_balance(payer.key(), total_cost as i64)?;
         for (i, amount) in amounts.iter().enumerate() {
             require!(*amount > 0, ErrorCode::AmountIsNotPositive);
-            group.change_balance(users[i], -*amount)?;
+            group.change_balance(users[i], -(*amount as i64))?;
         }
 
         Ok(())
@@ -123,8 +124,7 @@ pub mod fatira {
         let payer = &ctx.accounts.payer;
         let token_program = &ctx.accounts.token_program;
 
-        let sender_data = &sender.try_borrow_data()?;
-        let sender_account = SplAccount::unpack(sender_data).map_err(|e| {
+        let sender_account = SplAccount::unpack(&*sender.try_borrow_data()?).map_err(|e| {
             msg!("Failed to unpack sender account: {:?}", e);
             error!(ErrorCode::InvalidSenderAccount)
         })?;
@@ -154,20 +154,23 @@ pub mod fatira {
         let group = &mut ctx.accounts.group;
         let recipient = &ctx.accounts.recipient;
         let escrow = &ctx.accounts.escrow;
+        let escrow_authority = &ctx.accounts.escrow_authority;
         let payer = &ctx.accounts.payer;
         let token_program = &ctx.accounts.token_program;
 
         let balance = group.get_balance(payer.key()).ok_or(error!(ErrorCode::UserDoesNotExist))?;
-        let recipient_data = &recipient.try_borrow_data()?;
-        let recipient_account = SplAccount::unpack(recipient_data).map_err(|e| {
+        let recipient_account = SplAccount::unpack(&*recipient.try_borrow_data()?).map_err(|e| {
             msg!("Failed to unpack recipient account: {:?}", e);
             error!(ErrorCode::InvalidRecipientAccount)
         })?;
-        let escrow_data = &escrow.try_borrow_data()?;
-        let escrow_account = SplAccount::unpack(escrow_data).map_err(|e| {
+        let escrow_account = SplAccount::unpack(&*escrow.try_borrow_data()?).map_err(|e| {
             msg!("Failed to unpack escrow account: {:?}", e);
             error!(ErrorCode::InvalidEscrowAccount)
         })?;
+
+        let group_key = group.key();
+        let (expected_escrow_authority, escrow_bump) = Pubkey::find_program_address(&[b"authority", group_key.as_ref()], ctx.program_id);
+        let signer_seeds: &[&[u8]] = &[b"authority", group_key.as_ref(), &[escrow_bump]];
 
         require!(amount > 0, ErrorCode::AmountIsNotPositive);
         require!(balance >= (amount as i64), ErrorCode::InsufficientUserBalance);
@@ -176,16 +179,12 @@ pub mod fatira {
         require_keys_eq!(token_program.key(), *recipient.owner, ErrorCode::InconsistentTokenPrograms);
         require_keys_eq!(token_program.key(), *escrow.owner, ErrorCode::InconsistentTokenPrograms);
         require_keys_eq!(escrow.key(), group.escrow, ErrorCode::InconsistentEscrow);
-        require_keys_eq!(payer.key(), recipient_account.owner, ErrorCode::InconsistentRecipientOwner);
+        require_keys_eq!(escrow_authority.key(), expected_escrow_authority, ErrorCode::InconsistentEscrowAuthority);
         require!(!recipient_account.is_frozen(), ErrorCode::RecipientIsFrozen);
-
-        let group_key = group.key();
-        let (escrow_authority, escrow_bump) = Pubkey::find_program_address(&[b"authority", group_key.as_ref()], ctx.program_id);
-        let signer_seeds: &[&[u8]] = &[b"authority", group_key.as_ref(), &[escrow_bump]];
 
         let instruction = spl_transfer(&token_program.key(), &escrow.key(), &recipient.key(), &escrow_authority.key(), &[], amount)?;
         invoke_signed(&instruction, &[
-            escrow.to_account_info(), recipient.to_account_info(), token_program.to_account_info()
+            escrow.to_account_info(), recipient.to_account_info(), escrow_authority.to_account_info(), token_program.to_account_info()
         ], &[signer_seeds]).map_err(|e| {
             msg!("Failed to invoke transfer instruction: {:?}", e);
             error!(ErrorCode::TransferFailed)
@@ -275,6 +274,9 @@ pub struct Withdraw<'info> {
     /// CHECK: verify that escrow is a valid token account with the correct mint and matches the group escrow
     #[account(mut)]
     pub escrow: AccountInfo<'info>,
+
+    /// CHECK: verify that the escrow authority matches the expected PDA
+    pub escrow_authority: AccountInfo<'info>,
 
     #[account()]
     pub payer: Signer<'info>,

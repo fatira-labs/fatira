@@ -68,9 +68,6 @@ pub enum ErrorCode {
 	#[msg("The owner of the sender account does not match the payer")]
 	InconsistentSenderOwner,
 
-	#[msg("The owner of the recipient account does not match the payer")]
-	InconsistentRecipientOwner,
-
 	#[msg("The user does not have a sufficient balance to process this withdrawal")]
 	InsufficientUserBalance,
 
@@ -102,5 +99,8 @@ pub enum ErrorCode {
 	RecipientIsFrozen,
 
 	#[msg("The escrow has a close authority")]
-	EscrowHasCloseAuthority
+	EscrowHasCloseAuthority,
+
+	#[msg("The provided escrow authority does not match the escrow authority PDA")]
+	InconsistentEscrowAuthority,
 }

@@ -1,19 +1,19 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program, AnchorError } from "@coral-xyz/anchor";
+import { Program, AnchorError, BN } from "@coral-xyz/anchor";
 import { Fatira } from "../target/types/fatira";
 import fs from "fs";
 import os from "os";
 import { assert } from "chai";
-import { Token, TOKEN_PROGRAM_ID, createMint, createAccount, mintTo, createSetAuthorityInstruction, AuthorityType } from "@solana/spl-token";
+import { Token, TOKEN_PROGRAM_ID, createMint, createAccount, mintTo, createSetAuthorityInstruction, AuthorityType, getAccount } from "@solana/spl-token";
 import { PublicKey, SystemProgram, Keypair, LAMPORTS_PER_SOL, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 
 describe("fatira", () => {
-	const provider = anchor.AnchorProvider.env();
+	let provider = anchor.AnchorProvider.env();
 	anchor.setProvider(provider);
-	const program = anchor.workspace.fatira as Program<Fatira>;
+	let program = anchor.workspace.fatira as Program<Fatira>;
 
-	const payer = provider.wallet as anchor.Wallet;
-	const admin = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(`${os.homedir()}/admnewKmeGHkU1ZM8kKaPfunvV4GPmZUAfQ48zNA6fL.json`))));
+	let payer = provider.wallet as anchor.Wallet;
+	let admin = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(`${os.homedir()}/admnewKmeGHkU1ZM8kKaPfunvV4GPmZUAfQ48zNA6fL.json`))));
 	let groupKey: PublicKey;
 	let groupAccount: anchor.web3.AccountInfo<Buffer>;
 
@@ -201,9 +201,195 @@ describe("fatira", () => {
 		assert.ok(groupData.balances[1].user.equals(user.publicKey));
 	});
 
-	it("Fails to remove a user in a group without authorization", async () => {
+	it("Adds an expense", async () => {
+		await program.methods.updateBalances([payer.publicKey], [new BN(2)]).accounts({
+			group,
+			payer: user.publicKey,
+			admin: admin.publicKey
+		}).signers([admin, user]).rpc();
+
+		let groupData = await program.account.group.fetch(group);
+		assert.equal(groupData.balances[0].balance, -2);
+		assert.equal(groupData.balances[1].balance, 2);
+	});
+
+	it("Adds another expense", async () => {
+		await program.methods.updateBalances([payer.publicKey], [new BN(3)]).accounts({
+			group,
+			payer: user.publicKey,
+			admin: admin.publicKey
+		}).signers([admin, user]).rpc();
+
+		let groupData = await program.account.group.fetch(group);
+		assert.equal(groupData.balances[0].balance, -5);
+		assert.equal(groupData.balances[1].balance, 5);
+	});
+
+	it("Adds a self-expense", async () => {
+		await program.methods.updateBalances([payer.publicKey], [new BN(10)]).accounts({
+			group,
+			payer: payer.publicKey,
+			admin: admin.publicKey
+		}).signers([admin]).rpc();
+
+		let groupData = await program.account.group.fetch(group);
+		assert.equal(groupData.balances[0].balance, -5);
+		assert.equal(groupData.balances[1].balance, 5);
+	});
+
+	it("Fails to add an expense for a user not in the group", async () => {
+		let dummyKeypair = Keypair.generate();
+
 		try {
-			let dummyKeypair = Keypair.generate();
+			await program.methods.updateBalances([dummyKeypair.publicKey], [new BN(10)]).accounts({
+				group,
+				payer: payer.publicKey,
+				admin: admin.publicKey
+			}).signers([admin]).rpc();
+
+			assert.fail();
+		} catch(err: AnchorError) {
+			assert.equal(err.error.errorCode.code, "UserDoesNotExist");
+		}
+	});
+
+	it("Fails to add an expense with invalid admin keypair", async () => {
+		let fakeAdmin = Keypair.generate();
+
+		try {
+			await program.methods.updateBalances([user.publicKey], [new BN(5)]).accounts({
+				group,
+				payer: payer.publicKey,
+				admin: fakeAdmin.publicKey
+			}).signers([fakeAdmin]).rpc();
+
+			assert.fail();
+		} catch(err: AnchorError) {
+			assert.equal(err.error.errorCode.code, "Unauthorized");
+		}
+	});
+
+	it("Fails to remove a user with a non-zero balance", async () => {
+		try {
+			await program.methods.removeUser(user.publicKey).accounts({
+				group,
+				payer: payer.publicKey
+			}).rpc();
+
+			assert.fail();
+		} catch(err: AnchorError) {
+			assert.equal(err.error.errorCode.code, "UserBalanceNonZero");
+		}
+	});
+
+	it("Fails to withdraw from an empty escrow", async () => {
+		let [escrowAuthority, escrowBump] = await PublicKey.findProgramAddress([Buffer.from("authority"), group.toBuffer()], program.programId);
+			
+		try {
+			await program.methods.withdraw(new BN(5)).accounts({
+				group,
+				recipient: payerAccount,
+				escrow: escrowAccount,
+				escrowAuthority,
+				payer: user.publicKey,
+				tokenProgram: TOKEN_PROGRAM_ID
+			}).signers([user]).rpc();
+
+			assert.fail();
+		} catch(err: AnchorError) {
+			assert.equal(err.error.errorCode.code, "InsufficientEscrowBalance");
+		}
+	});
+
+	it("Deposits to the escrow", async () => {
+		let initialPayerBalance = (await getAccount(provider.connection, payerAccount)).amount;
+		let initialEscrowBalance = (await getAccount(provider.connection, escrowAccount)).amount;
+
+		await program.methods.deposit(new BN(5)).accounts({
+			group,
+			sender: payerAccount,
+			escrow: escrowAccount,
+			payer: payer.publicKey,
+			tokenProgram: TOKEN_PROGRAM_ID
+		}).rpc();
+
+		let finalPayerBalance = (await getAccount(provider.connection, payerAccount)).amount;
+		let finalEscrowBalance = (await getAccount(provider.connection, escrowAccount)).amount;
+
+		let groupData = await program.account.group.fetch(group);
+		assert.equal(groupData.balances[0].balance, 0);
+		assert.equal(groupData.balances[1].balance, 5);
+		assert.equal(initialPayerBalance - finalPayerBalance, 5n);
+		assert.equal(finalEscrowBalance - initialEscrowBalance, 5n);
+	});
+
+	it("Fails to withdraw more than the amount owed", async () => {
+		try {
+			let [escrowAuthority, escrowBump] = await PublicKey.findProgramAddress([Buffer.from("authority"), group.toBuffer()], program.programId);
+			
+			await program.methods.withdraw(new BN(6)).accounts({
+				group,
+				recipient: payerAccount,
+				escrow: escrowAccount,
+				escrowAuthority,
+				payer: user.publicKey,
+				tokenProgram: TOKEN_PROGRAM_ID
+			}).signers([user]).rpc();
+
+			assert.fail();
+		} catch(err: AnchorError) {
+			assert.equal(err.error.errorCode.code, "InsufficientUserBalance");
+		}
+	});
+
+	it("Fails to withdraw with the wrong escrow authority", async () => {
+		let dummyKeypair = Keypair.generate();
+
+		try {
+			await program.methods.withdraw(new BN(5)).accounts({
+				group,
+				recipient: payerAccount,
+				escrow: escrowAccount,
+				escrowAuthority: dummyKeypair.publicKey,
+				payer: user.publicKey,
+				tokenProgram: TOKEN_PROGRAM_ID
+			}).signers([user]).rpc();
+
+			assert.fail();
+		} catch(err: AnchorError) {
+			assert.equal(err.error.errorCode.code, "InconsistentEscrowAuthority");
+		}
+	});
+
+	it("Withdraws the amount owed", async () => {
+		let initialPayerBalance = (await getAccount(provider.connection, payerAccount)).amount;
+		let initialEscrowBalance = (await getAccount(provider.connection, escrowAccount)).amount;
+
+		let [escrowAuthority, escrowBump] = await PublicKey.findProgramAddress([Buffer.from("authority"), group.toBuffer()], program.programId);
+		
+		await program.methods.withdraw(new BN(5)).accounts({
+			group,
+			recipient: payerAccount,
+			escrow: escrowAccount,
+			escrowAuthority,
+			payer: user.publicKey,
+			tokenProgram: TOKEN_PROGRAM_ID
+		}).signers([user]).rpc();
+
+		let finalPayerBalance = (await getAccount(provider.connection, payerAccount)).amount;
+		let finalEscrowBalance = (await getAccount(provider.connection, escrowAccount)).amount;
+
+		let groupData = await program.account.group.fetch(group);
+		assert.equal(groupData.balances[0].balance, 0);
+		assert.equal(groupData.balances[1].balance, 0);
+		assert.equal(finalPayerBalance - initialPayerBalance, 5n);
+		assert.equal(initialEscrowBalance - finalEscrowBalance, 5n);
+	});
+
+	it("Fails to remove a user in a group without authorization", async () => {
+		let dummyKeypair = Keypair.generate();
+
+		try {
 			await program.methods.removeUser(user.publicKey).accounts({
 				group,
 				payer: dummyKeypair.publicKey
