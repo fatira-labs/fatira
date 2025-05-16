@@ -20,12 +20,12 @@ const { width, height } = Dimensions.get('window');
 // --- Asset Imports ---
 const settingsIcon = require('./assets/piesettings.png');
 
-
+import colors from "./color.js"
 // --- Colors ---
 const POSITIVE_BALANCE_COLOR = '#3E8000';
 const NEGATIVE_BALANCE_COLOR = '#AD0000';
-const TRANSACTION_BAR_BACKGROUND = 'rgba(240, 168, 41, 0.9)'; // F0A829 with 90% opacity (slightly less transparent)
-const TRANSACTION_BAR_BORDER = 'rgba(201, 113, 8, 0.9)';     // C97108 with 90% opacity
+const TRANSACTION_BAR_BACKGROUND = colors.GROUP_BAR_BACKGROUND_COLOR; // F0A829 with 90% opacity (slightly less transparent)
+const TRANSACTION_BAR_BORDER = colors.GROUP_BAR_BORDER_COLOR;     // C97108 with 90% opacity
 
 const GroupMainScreen = ({
   groupName,
@@ -128,7 +128,7 @@ console.log("JENR w: ", transactions)
         <View style={styles.separator} />
 
         {/* Transaction History */}
-        <Text style={styles.transactionHistoryTitle}>Transaction History:</Text>
+        <Text style={styles.transactionHistoryTitle}>Transaction History</Text>
         <ScrollView style={styles.transactionsScrollView}>
           {transactions && transactions.length > 0 ? (
             transactions.map(renderTransaction)
@@ -204,6 +204,7 @@ const styles = StyleSheet.create({
     fontSize: width * 0.05,
     color: '#FFFFFF',
     fontWeight: 'bold',
+    textAlign:'center',
     paddingHorizontal: width * 0.05,
     marginBottom: height * 0.015,
   },

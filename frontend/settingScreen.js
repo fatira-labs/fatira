@@ -49,8 +49,32 @@ export default function SettingScreen({
 
   const owner = members[0] === appUsername;
 
-  const handleRemove = (member) => Alert.alert(`Remove ${member}?`);
-  const handleLeave = () => Alert.alert('Leave group?');
+  const handleRemove = (member) => Alert.alert(`Remove ${member}?`, 'Are you sure you want to remove this member?',[
+    {
+      text: 'Cancel',
+      style: 'cancel',
+    },
+    {
+      text: 'Remove',
+      onPress: () => {
+        
+      }  
+    }
+    
+  ]);
+  const handleLeave= () => Alert.alert(`Leave group?`, 'Are you sure?',[
+    {
+      text: 'Cancel',
+      style: 'cancel',
+    },
+    {
+      text: 'Remove',
+      onPress: () => {
+        
+      }  
+    }
+    
+  ]);
 
   return (
     <View style={styles.container}>

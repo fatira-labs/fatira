@@ -10,7 +10,7 @@ import {
   Dimensions,
   Platform,
   StatusBar,
-  Alert
+  Alert,
 } from 'react-native';
 // expo-image is a good choice for optimized images, ensure it's installed if you use it.
 // If you haven't installed it, you can revert to the built-in Image from 'react-native'.
@@ -29,10 +29,10 @@ const topPieAsset = require('./assets/toppie1.png');
 const backArrowAsset = require('./assets/backbutton.png');
 const cameraIconAsset = require('./assets/piecamera.png');
 const createButtonAsset = require('./assets/piecreate.png');
-
+import colors from "./color.js"
 // --- Constants ---
-const INPUT_BAR_BACKGROUND_COLOR = 'rgba(240, 168, 41, 0.8)';
-const INPUT_BAR_BORDER_COLOR = 'rgba(201, 113, 8, 0.8)';
+const INPUT_BAR_BACKGROUND_COLOR = colors.GROUP_BAR_BACKGROUND_COLOR
+const INPUT_BAR_BORDER_COLOR = colors.GROUP_BAR_BORDER_COLOR
 // const PLACEHOLDER_IMAGE_URI = 'https://placehold.co/200x200/E0A829/2C1E0A?text=Receipt'; // Not used if ImagePicker is active
 
 const AddExpenseScreen = ({
@@ -54,10 +54,11 @@ const AddExpenseScreen = ({
   const [isSplitModalVisible, setIsSplitModalVisible] = useState(false); // State for modal visibility
 
   const onDateChange = (event, selectedDate) => {
-    setShowDatePicker(false); // Hide picker on selection or dismissal
+   
     if (selectedDate) {
       setExpenseDate(selectedDate);
     }
+    //setShowDatePicker(false);
   };
 
   const formatDate = (date) => {
@@ -220,7 +221,7 @@ const AddExpenseScreen = ({
           <TextInput
             style={[styles.inputBar, styles.textInput]}
             placeholder="e.g., Dinner, Groceries, Uber"
-            placeholderTextColor="#BBBCCC"
+            placeholderTextColor="black"
             value={expenseName}
             onChangeText={setExpenseName}
           />
@@ -229,7 +230,7 @@ const AddExpenseScreen = ({
           <TextInput
             style={[styles.inputBar, styles.textInput]}
             placeholder="0.00"
-            placeholderTextColor="#BBBCCC"
+            placeholderTextColor="black"
             value={totalAmount}
             onChangeText={setTotalAmount}
             keyboardType="numeric"
@@ -238,7 +239,7 @@ const AddExpenseScreen = ({
           <Text style={styles.label}>Date:</Text>
           <TouchableOpacity
             style={[styles.inputBar, styles.dateInput]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => showDatePicker ? setShowDatePicker(false) : setShowDatePicker(true)}
           >
             <Text style={styles.dateText}>{formatDate(expenseDate)}</Text>
           </TouchableOpacity>
@@ -246,10 +247,12 @@ const AddExpenseScreen = ({
             <DateTimePicker
               value={expenseDate}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onDateChange}
+              display={'spinner'}
+               onChange={onDateChange}
+          
+              
               maximumDate={new Date()} // Users can't select future dates for expenses
-               textColor="#FFFFFF" // textColor for DateTimePicker is not universally supported
+               textColor={colors.WHITE} // textColor for DateTimePicker is not universally supported
               //themeVariant="dark" // For a dark theme if supported by the native picker
             />
           )}
@@ -276,7 +279,7 @@ const AddExpenseScreen = ({
           </TouchableOpacity>
           {splitDetails && splitDetails.splits && ( // Check if splitDetails.splits exists
             <Text style={styles.splitDetailText} numberOfLines={2} ellipsizeMode="tail">
-                {splitDetails.splits.map(s => `${s.username}: $${s.amount?.toFixed(2)}`).join('; ')}
+                {splitDetails.splits.map(s => `${s.username[0].toUpperCase()+s.username.slice(1)}: $${s.amount?.toFixed(2)}`).join('; ')}
             </Text>
           )}
 
@@ -319,19 +322,24 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1, // Allows ScrollView to take up space needed by BottomNavBar
     width: '100%',
+    borderTopWidth: 2,
+    borderBlockColor: colors.GROUP_BAR_BORDER_COLOR,
+   
+    
   },
   scrollContentContainer: {
     flexGrow: 1, // Important for ScrollView to scroll properly
     alignItems: 'center', // Center the formContainer
-    paddingBottom: 150, // Ample space for create button and nav bar
+  
   },
   topPieImage: { // This style was from your uploaded file
-    width: '100%',
-    height: height, // This seems very large, might need adjustment
-    position: 'absolute',
-    top: -height * 0.38, // This positions it significantly off-screen at the top
-    left: 0,
-    right: 0,
+    
+    width:'100%',
+    height:height,
+    position:'absolute',
+    top:-height * 0.38,
+    left:0,
+    right:0
   },
   backButtonPlacement: { // This style was from your uploaded file
     position: 'absolute',
@@ -349,7 +357,7 @@ const styles = StyleSheet.create({
     fontSize: width * 0.06,
     color: '#FFFFFF',
     fontWeight: 'bold',
-    marginTop: height * 0.1, // This might be too low if topPieImage is very tall or positioned high
+    marginTop: height * 0.12, // This might be too low if topPieImage is very tall or positioned high
     marginBottom: height * 0.02,
     textAlign: 'center',
     zIndex: 5, // Ensure title is above the pie image
@@ -381,14 +389,14 @@ const styles = StyleSheet.create({
   },
   textInput: { // This style was from your uploaded file
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.BLACK,
     fontSize: width * 0.042,
   },
   dateInput: { // This style was from your uploaded file
     justifyContent: 'center',
   },
   dateText: { // This style was from your uploaded file
-    color: '#FFFFFF',
+    color: colors.BLACK,
     fontSize: width * 0.042,
   },
   datePicker: { // This style was from your uploaded file, might need adjustment for dark theme
@@ -459,8 +467,8 @@ const styles = StyleSheet.create({
     // height: width * 0.32, // Moved to createButtonImage
   },
   createButtonImage: { // This style was from your uploaded file
-    width: width * 0.32,
-    height: width * 0.32,
+    width: width * 0.4,
+    height: width * 0.4,
   },
 });
 

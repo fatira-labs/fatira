@@ -33,12 +33,9 @@ export default function MoneyPay({
 }) {
   // round to 2 decimal places
   
-  groupBalance = parseFloat(groupBalance); // Ensure groupBalance is a number
-  groupBalance = Math.round(groupBalance * 100) / 100;
-  let owe = false;
-  if (groupBalance > 0){
-      owe = true;
-  }
+  const balance = parseFloat(groupBalance) || 0;
+  const formattedBalance = Math.abs(Math.round(balance * 100) / 100).toFixed(2);
+  const isOwed = balance > 0;
   return (
     <View style={styles.container}>
       {/* Pie graphic */}
@@ -51,29 +48,22 @@ export default function MoneyPay({
 
       {/* HEADER */}
      <View style={{height:height*0.02}}></View>
-       {owe ? (
-        <View style={{ ...styles.headerRow,justifyContent:'center' }}>
-            
-             <Text style={styles.groupText}>{currentGroup}  <Text style={styles.dateText}>owes you</Text></Text>
-             </View>
-       ) : (
-          
-        <View style={{ ...styles.headerRow,justifyContent:'center' }}>
-             <Text style={styles.dateText}>you owe    <Text style={styles.groupText}>{currentGroup}</Text></Text>
-            
-             </View>
-     
-       )}
-       <View style={styles.redBox}>
-          <Text style={{color:'white',fontSize:80,fontWeight:'bold'}}>${Math.abs(groupBalance)}</Text>
-       </View>
+         {/* Title */}
+      <View style={styles.titleContainer}>
+        <Text style={styles.titleText}>{isOwed ? 'You are owed by' : 'You owe'}</Text>
+        <Text style={styles.groupText}>{currentGroup}</Text>
+      </View>
+      <View style={styles.amountContainer}>
+        <Text style={styles.amountText}>${formattedBalance}</Text>
+      </View>
+
        <View style={{height:height*0.04}} />
 
        <View style={{...styles.redBox}}>
      
        <TouchableOpacity  style={{...StyleSheet.absoluteFill}}     onPress={() =>Alert.alert("HELLO WORLD")} activeOpacity={0.7}>
     <Image
-      source={owe  ? getImageSource : payImageSource}
+      source={isOwed  ? getImageSource : payImageSource}
       style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
       resizeMode="contain"
     />
@@ -104,7 +94,34 @@ const styles = StyleSheet.create({
       : height * 0.04,
     alignItems: 'center',
   },
-
+  titleContainer: {
+    marginTop: height * 0.15,
+    alignItems: 'center',
+  },
+  titleText: {
+    color: '#FFF',
+    fontSize: 30,
+    marginBottom: 4,
+  },
+amountContainer: {
+    marginTop: height * 0.04,
+    width: '80%',
+    paddingVertical: 20,
+    backgroundColor: '#333',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  amountText: {
+    color: '#FFF',
+    fontSize: 48,
+    fontWeight: '300',
+  },
   topPie: {
     position: 'absolute',
     width: '100%',
@@ -132,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   dateText: { color: '#FFF', fontSize: 23 },
-  groupText: { color: '#D4A32A', fontSize: 23, fontWeight: 'bold' },
+  groupText: { color: '#D4A32A', fontSize: 30, fontWeight: 'bold' },
 
   payerRow: {
     width: '90%',

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import BottomNavBar from './BottomNavBar';
-
+import colors from "./color.js"
 const { width, height } = Dimensions.get('window');
 const backArrowAsset = require('./assets/backbutton.png');
 const topPieAsset    = require('./assets/toppie1.png');
@@ -33,7 +33,7 @@ export default function ViewExpenseScreen({
  const { date, paidBy, totalAmount, yourShare } = expense;
   
   let members = [...MOCK_USER_GROUPS_DB.members]
-  let newMembers = members.filter(m => m !== paidBy);
+  let newMembers = members;
 
   
 
@@ -55,8 +55,8 @@ export default function ViewExpenseScreen({
 
       {/* WHO PAID */}
       <View style={styles.payerRow}>
-        <Text style={[styles.text, styles.paid]}>{paidBy} paid</Text>
-        <Text style={[styles.text, styles.paid]}>${totalAmount}</Text>
+        <Text style={[styles.text, styles.paid]}>{paidBy[0].toUpperCase()+paidBy.slice(1)} paid</Text>
+        <Text style={[styles.text, styles.paid]}>${totalAmount.toFixed(2)}</Text>
       </View>
 
       {/* RED SCROLLABLE LIST ONLY */}
@@ -64,8 +64,8 @@ export default function ViewExpenseScreen({
         <ScrollView howsVerticalScrollIndicator={false}>
           {newMembers.map((name, idx) => (
             <View key={`${name}-${idx}`} style={styles.splitRow}>
-              <Text style={[styles.text, styles.owed]}>{name}</Text>
-              <Text style={[styles.text, styles.owed]}>${yourShare}</Text>
+              <Text style={[styles.text, styles.owed]}>{name[0].toUpperCase()+name.slice(1)}</Text>
+              <Text style={[styles.text, styles.owed]}>${yourShare.toFixed(2)}</Text>
             </View>
           ))}
         </ScrollView>
@@ -142,13 +142,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
+    
+    
   },
 
   redBox: {
+    borderTopWidth:2,
+    borderColor:'#D4A32A',
     width: '90%',
     height: height * (0.15),      // fixed 30% of screen
     //backgroundColor: '',a// dark red
     borderRadius: 8,
+    
     overflow: 'hidden',
   },
 

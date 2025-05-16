@@ -222,7 +222,7 @@ const App = () => {
     ],
     "group_shruthik_1":[
       { id: "tx_col_1", date: "05/10", title: "Hackathon Pizza", paidBy: "Alice", totalAmount: 60, yourShare: 20, type: "group_expense_involved", fullDetail: "Alice paid $60 for pizzas" },
-      { id: "tx_col_2", date: "05/09", title: "Cloud Credits", paidBy: "You", totalAmount: 25, yourShare: 25, type: "lent", fullDetail: "You paid $25 for cloud credits" },
+      { id: "tx_col_2", date: "05/09", title: "Cloud Credits", paidBy: "You", totalAmount: 25, yourShare: 12.5, type: "lent", fullDetail: "You paid $25 for cloud credits" },
     ],
     "group_shruthik_2": [
       { id: "tx_ethd_1", date: "04/26", title: "Chipotle", paidBy: "Charlie", totalAmount: 40, yourShare: 20, type: "borrowed", fullDetail: "Charlie paid $40, you owe $20" },
@@ -432,7 +432,12 @@ const App = () => {
 
   // Navigate back from AddExpenseScreen
   const handleBackFromAddExpense = () => {
+    console.log(previousScreen===currentScreen);
+    if(previousScreen===currentScreen){
+      setCurrentScreen('GroupMainScreen');
+    }else{
     setCurrentScreen(previousScreen); // Go back to the screen user was on before AddExpense
+    }
   };
 
   // Placeholder Navigations for BottomNavBar items and Group Settings
@@ -444,6 +449,13 @@ const App = () => {
   const handleNavProfile = () => {
     setPreviousScreen(currentScreen); // Store current screen
     setCurrentScreen('ProfilePage');
+  }
+  const handleBackFromViewExpense = () => {
+    if(previousScreen == currentScreen){
+      setCurrentScreen('GroupMainScreen');
+    }else{
+      setCurrentScreen(previousScreen);
+    }
   }
 
   const handleTransactionPage = (transaction,groupName) => {
@@ -524,7 +536,7 @@ const App = () => {
 
       {currentScreen === 'ViewExpenseScreen' && userPublicKey && appUsername && (
         <ViewExpenseScreen 
-            onBack={handleBackFromAddExpense}
+            onBack={handleBackFromViewExpense}
            //come back here
             currentGroup={selectedGroup.name} 
             expense={MOCK_GROUP_TRANSACTIONS[selectedGroup.id][idTransaction] || []} // Pass the first transaction for demo

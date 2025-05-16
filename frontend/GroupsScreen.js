@@ -28,7 +28,7 @@ const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup, onSelectGrou
     <View style={styles.groupsScreenContainer}>
       <Image source={topPieAsset} style={styles.topPieImage} resizeMode="contain" />
     
-      <Text style={styles.groupsTitle}>{username}'s groups:</Text>
+      <Text style={styles.groupsTitle}>{username[0].toUpperCase() + username.slice(1)}'s groups</Text>
       <ScrollView style={styles.groupsListContainer} contentContainerStyle={styles.groupsListContentContainer}>
         {userGroups && userGroups.length > 0 ? (
           userGroups.map((group) => ( // Changed from (group, index) to (group)
@@ -87,10 +87,11 @@ const styles = StyleSheet.create({
     fontSize: width * 0.06,
     color: '#FFFFFF',
     fontWeight: 'bold',
+    textAlign: 'center',
     marginTop: height * 0.15, // Reduced from 0.22 to 0.15 to move it up
     marginBottom: height * 0.025,
-    alignSelf: 'flex-start', // Added to align text to the left
-    marginLeft: width * 0.05, // Added left margin to align with the groups list
+    alignSelf: 'center', // Added to align text to the left
+   // marginLeft: width * 0.05, // Added left margin to align with the groups list
   },
   groupsListContainer: {
     width: '90%',

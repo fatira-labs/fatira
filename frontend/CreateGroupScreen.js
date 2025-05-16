@@ -14,6 +14,7 @@ import {
   Alert
 } from 'react-native';
 import { Image } from 'expo-image';
+import colors from "./color.js"
 
 // Get screen dimensions
 const { width, height } = Dimensions.get('window');
@@ -25,8 +26,8 @@ const backArrowAsset = require('./assets/backbutton.png'); // Assuming you want 
 
 // --- Constants ---
 const TOKEN_OPTIONS = ['USDC', 'USD*', 'EURC', 'SOL', 'Custom'];
-const GROUP_BAR_BACKGROUND_COLOR = 'rgba(240, 168, 41, 0.8)'; // F0A829 with 80% opacity
-const GROUP_BAR_BORDER_COLOR = 'rgba(201, 113, 8, 0.8)'; // C97108 with 80% opacity
+const GROUP_BAR_BACKGROUND_COLOR = colors.GROUP_BAR_BACKGROUND_COLOR;
+const GROUP_BAR_BORDER_COLOR = colors.GROUP_BAR_BORDER_COLOR; // C97108 with 80% opacity
 
 const inputHeight = height * 0.055;
 
@@ -106,14 +107,14 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
         <Image source={backArrowAsset} style={styles.backArrowIcon} resizeMode="contain" />
       </TouchableOpacity>
 
-      <Text style={styles.pageTitle}>Create Group:</Text>
+      <Text style={styles.pageTitle}>Create Group</Text>
 
       <ScrollView style={styles.formContainer} contentContainerStyle={styles.formContentContainer}>
         {/* Group Title Input */}
         <TextInput
           style={[styles.inputBar, styles.textInput]}
           placeholder="Group Title"
-          placeholderTextColor="#BBBCCC"
+            placeholderTextColor="black"
           value={groupTitle}
           onChangeText={setGroupTitle}
         />
@@ -128,7 +129,7 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
           <TextInput
             style={[styles.inputBar, styles.textInput, { marginTop: 10 }]}
             placeholder="Enter Custom Token Address"
-            placeholderTextColor="#BBBCCC"
+              placeholderTextColor="black"
             value={customTokenAddress}
             onChangeText={setCustomTokenAddress}
             autoCapitalize="none"
@@ -141,7 +142,7 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
           <TextInput
             style={[styles.textInput, styles.memberInput]}
             placeholder="Enter username to add"
-            placeholderTextColor="#BBBCCC"
+            placeholderTextColor="black"
             value={memberUsernameInput}
             onChangeText={setMemberUsernameInput}
             autoCapitalize="none"
@@ -156,7 +157,7 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
           <View style={styles.membersList}>
             {members.map((member) => (
               <View key={member.id} style={[styles.inputBar, styles.memberListItem]}>
-                <Text style={styles.memberText}>{member.username}</Text>
+                <Text style={styles.memberText}>{member.username[0].toUpperCase()+member.username.slice(1)}</Text>
                 {member.username.toLowerCase() !== currentUsername.toLowerCase() && (
                     <TouchableOpacity onPress={() => handleRemoveMember(member.id)}>
                         <Text style={styles.removeMemberText}>Remove</Text>
@@ -198,7 +199,7 @@ const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername }) => {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: colors.SCREEN_COLOR,
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : height * 0.02,
     },
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: width * 0.06,
-    color: '#FFFFFF',
+    color: colors.WHITE,
     fontWeight: 'bold',
     marginTop: height * 0.18,
     marginBottom: height * 0.02,
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: width * 0.045,
-    color: '#FFFFFF',
+    color: colors.WHITE,
     fontWeight: '500',
     marginTop: height * 0.02,
     marginBottom: height * 0.01,
@@ -258,13 +259,13 @@ const styles = StyleSheet.create({
     alignItems: 'center', // For member list items
   },
   textInput: { // Specific to TextInput components using inputBar style
-    color: '#FFFFFF', // White text for input
+    color: 'black', // White text for input
     fontSize: width * 0.04,
     textAlignVertical: 'center', // Ensure text is centered vertically
 
   },
   dropdownText: {
-    color: '#FFFFFF',
+    color: 'black',
     fontSize: width * 0.04,
   },
   addMemberContainer: {
@@ -276,8 +277,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: width * 0.02,
     height: inputHeight,
-    backgroundColor: 'rgba(240, 168, 41, 0.8)', // match the inputBar color
-    borderColor: 'rgba(201, 113, 8, 0.8)',
+    backgroundColor: GROUP_BAR_BACKGROUND_COLOR, // match the inputBar color
+    borderColor: GROUP_BAR_BORDER_COLOR,
     borderWidth: 2,
     borderRadius: 10,
     paddingHorizontal: width * 0.04,
@@ -301,21 +302,22 @@ const styles = StyleSheet.create({
     marginTop: height * 0.01,
   },
   memberListItem: {
-    backgroundColor: 'rgba(205, 161, 75, 0.95)', // Lighter orange for member list holders
+    //rgba(235, 188, 93, 0.95) 
+    backgroundColor: colors.MEMBERS_LIST, // Lighter orange for member list holders
   },
   memberText: {
-    color: '#2C1E0A', // Dark text on the orange bar
+    color: colors.BLACK, // Dark text on the orange bar
     fontSize: width * 0.04,
     fontWeight: '500',
   },
   removeMemberText: {
-    color: '#D32F2F', // A red color for removal
+    color: colors.REMOVE_BTN_COLOR, // A red color for removal
     fontSize: width * 0.035,
     fontWeight: 'bold',
   },
   createButtonContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -15,
     alignSelf: 'center',
   },
   createButtonImage: {
@@ -325,7 +327,7 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)', // Darker overlay
+    backgroundColor: colors.BLACK, // Darker overlay
     justifyContent: 'center',
     alignItems: 'center',
   },

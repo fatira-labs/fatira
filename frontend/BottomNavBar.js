@@ -1,60 +1,83 @@
 // BottomNavBar.js
 import React from 'react';
+import { View, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
 import { Image } from 'expo-image';
 
-import { View, TouchableOpacity, StyleSheet, Dimensions, Alert } from 'react-native';
-
 const { width } = Dimensions.get('window');
+const ICON_SIZE = width *0.2
+const BAR_HEIGHT = 90;
 
-// --- Asset Imports ---
-// Ensure these assets are in your ./assets folder
-const homeIcon = require('./assets/homeNavBar.png');
-const addIcon = require('./assets/pieplus.png'); // Assuming this is the correct plus icon for the nav bar
-const moneyIcon = require('./assets/moneyNavBar.png');
+// Assets
+const homeIcon    = require('./assets/homeNavBar.png');
+const addIcon     = require('./assets/pieplus.png');
+const moneyIcon   = require('./assets/moneyNavBar.png');
 const profileIcon = require('./assets/profileNavBar.png');
 
-const BottomNavBar = ({ onNavigateHome, onNavigateAdd, onNavigateMoney, onNavigateProfile }) => {
+const BottomNavBar = ({ active, onNavigateHome, onNavigateAdd, onNavigateMoney, onNavigateProfile }) => {
+  const buttonData = [
+    { key: 'home',   icon: homeIcon,    action: onNavigateHome },
+    { key: 'add',    icon: addIcon,     action: onNavigateAdd },
+    { key: 'money',  icon: moneyIcon,   action: onNavigateMoney },
+    { key: 'profile',icon: profileIcon, action: onNavigateProfile },
+  ];
+
   return (
     <View style={styles.navBarContainer}>
-      <TouchableOpacity style={styles.navBarButton} onPress={onNavigateHome}>
-        <Image source={homeIcon} style={styles.navBarIcon} resizeMode="contain" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.navBarButton} onPress={onNavigateAdd}>
-        <Image source={addIcon} style={styles.navBarIcon} resizeMode="contain" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.navBarButton} onPress={onNavigateMoney}>
-        <Image source={moneyIcon} style={styles.navBarIcon} resizeMode="contain" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.navBarButton} onPress={onNavigateProfile}>
-        <Image source={profileIcon} style={styles.navBarIcon} resizeMode="contain" />
-      </TouchableOpacity>
+      {buttonData.map(btn => (
+        <TouchableOpacity
+          key={btn.key}
+          style={styles.navBarButton}
+          onPress={btn.action}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={btn.icon}
+            style={[
+              styles.navBarIcon,
+              btn.key === active && styles.activeIcon
+            ]}
+            contentFit="contain"
+          />
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   navBarContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    // backgroundColor: '#111111', // Dark background for the nav bar
-    // borderTopWidth: 0.5,
-    // borderTopColor: '#333333', // Subtle top border
-    // height: 30, // Adjust height as needed  
-    width: '100%',
-    marginBottom: 0,
-    paddingBottom: 0,
+    flexDirection:      'row',
+    justifyContent:     'space-around',
+    alignItems:         'center',
+    height:             BAR_HEIGHT,
+ //   paddingBottom:      Platform.OS === 'ios' ? 20 : 0, // safe-area for iPhone
+    backgroundColor:    '#1A1A1A',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius:16,
+    ...Platform.select({
+      ios: {
+        shadowColor:   '#000',
+        shadowOffset:  { width: 0, height: -2 },
+        shadowOpacity: 0.3,
+        shadowRadius:  4,
+      },
+      android: {
+        elevation: 8,
+      }
+    }),
   },
   navBarButton: {
-    flex: 1, // Each button takes equal space
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    marginBottom: 0,
+    flex:            1,
+    alignItems:      'center',
+    justifyContent:  'center',
   },
   navBarIcon: {
-    width: width * 0.2, // Adjust icon size as needed
-    height: width * 0.2,
+    width:  ICON_SIZE,
+    height: ICON_SIZE,
+    
+  },
+  activeIcon: {
+    tintColor: '#D4A32A',         // highlight color
   },
 });
 
