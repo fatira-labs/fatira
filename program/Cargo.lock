@@ -542,6 +542,8 @@ name = "fatira"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "once_cell",
+ "solana-program",
  "spl-token",
 ]
 

@@ -86,6 +86,9 @@ pub enum ErrorCode {
 	#[msg("Only group admin or the user can remove a user")]
 	UnauthorizedRemove,
 
+	#[msg("Only group admin can transfer admin")]
+	UnauthorizedTransfer,
+
 	#[msg("The user has not approved the request to join the group")]
 	UserNotApproved,
 
