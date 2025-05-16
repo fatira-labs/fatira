@@ -37,4 +37,28 @@ router.post("/signup", async (req, res) => {
     }
 });
 
+router.post("/add-user", async (req, res) => {
+    try {
+        const {caller, groupId, user} = req.body;
+
+        if (!caller || !groupId || !user) {
+            return res.status(400).json({message: "Missing required fields"});
+        }
+        
+        // find group
+        // read group.users[] to check if 'caller' == users[0]
+        // if true
+            // all solana program to add 'user' to group.users[]
+            // add groupId to user.groups[]  
+            // return success
+        // if false
+            // return unauthorized addition error
+        // if group not found, return error
+
+    } catch (error) {
+        console.error('Error in adding user:', error);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
 export default router;
