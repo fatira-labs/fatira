@@ -3,6 +3,7 @@ use anchor_lang::solana_program::program_pack::Pack;
 use spl_token::state::{Account as SplAccount, Mint as SplMint};
 use spl_token::instruction::transfer as spl_transfer;
 use solana_program::program::{invoke, invoke_signed};
+use std::str::FromStr;
 mod state;
 mod error;
 mod constants;
@@ -22,7 +23,8 @@ pub mod fatira {
         let currency = &ctx.accounts.currency;
         let escrow = &ctx.accounts.escrow;
         let admin = &ctx.accounts.admin;
-        let (escrow_authority, _) = Pubkey::find_program_address(&[b"escrow", group.key().as_ref()], ctx.program_id);
+        let (escrow_authority, _) = Pubkey::find_program_address(&[b"authority", group.key().as_ref()], ctx.program_id);
+        let admin_pubkey = Pubkey::from_str(ADMIN_PUBKEY).unwrap();
 
         let currency_data = &currency.try_borrow_data()?;
         let _currency_account = SplMint::unpack(currency_data).map_err(|e| {
@@ -35,12 +37,13 @@ pub mod fatira {
             error!(ErrorCode::InvalidEscrowAccount)
         })?;
 
-        require_keys_eq!(admin.key(), *ADMIN_PUBKEY, ErrorCode::Unauthorized);
+        require_keys_eq!(admin.key(), admin_pubkey, ErrorCode::Unauthorized);
         require_keys_eq!(*currency.owner, *escrow.owner, ErrorCode::InconsistentTokenPrograms);
         require_keys_eq!(escrow_account.owner, escrow_authority, ErrorCode::InconsistentEscrowOwner);
         require_keys_eq!(currency.key(), escrow_account.mint, ErrorCode::InconsistentEscrowMint);
         require!(escrow_account.delegate.is_none(), ErrorCode::EscrowHasDelegate);
         require!(!escrow_account.is_frozen(), ErrorCode::EscrowIsFrozen);
+        require!(escrow_account.close_authority.is_none(), ErrorCode::EscrowHasCloseAuthority);
 
         group.currency = currency.key();
         group.escrow = escrow.key();
@@ -98,8 +101,9 @@ pub mod fatira {
         let group = &mut ctx.accounts.group;
         let payer = &ctx.accounts.payer;
         let admin = &ctx.accounts.admin;
+        let admin_pubkey = Pubkey::from_str(ADMIN_PUBKEY).unwrap();
 
-        require_keys_eq!(admin.key(), *ADMIN_PUBKEY, ErrorCode::Unauthorized);
+        require_keys_eq!(admin.key(), admin_pubkey, ErrorCode::Unauthorized);
         require_eq!(users.len(), amounts.len(), ErrorCode::InconsistentBalanceLengths);
         require!(total_cost > 0, ErrorCode::AmountIsNotPositive);
 
@@ -176,8 +180,8 @@ pub mod fatira {
         require!(!recipient_account.is_frozen(), ErrorCode::RecipientIsFrozen);
 
         let group_key = group.key();
-        let (escrow_authority, escrow_bump) = Pubkey::find_program_address(&[b"escrow", group_key.as_ref()], ctx.program_id);
-        let signer_seeds: &[&[u8]] = &[b"escrow", group_key.as_ref(), &[escrow_bump]];
+        let (escrow_authority, escrow_bump) = Pubkey::find_program_address(&[b"authority", group_key.as_ref()], ctx.program_id);
+        let signer_seeds: &[&[u8]] = &[b"authority", group_key.as_ref(), &[escrow_bump]];
 
         let instruction = spl_transfer(&token_program.key(), &escrow.key(), &recipient.key(), &escrow_authority.key(), &[], amount)?;
         invoke_signed(&instruction, &[

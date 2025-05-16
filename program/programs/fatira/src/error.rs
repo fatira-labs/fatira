@@ -100,4 +100,7 @@ pub enum ErrorCode {
 
 	#[msg("The recipient is frozen")]
 	RecipientIsFrozen,
+
+	#[msg("The escrow has a close authority")]
+	EscrowHasCloseAuthority
 }
