@@ -114,4 +114,6 @@ router.post("/add-user", async (req, res) => {
     }
 });
 
+//TODO: ADD CREATE GROUP ROUTE
+
 export default router;

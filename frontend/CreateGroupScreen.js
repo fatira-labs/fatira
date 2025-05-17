@@ -1,5 +1,5 @@
 // CreateGroupScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -31,23 +31,23 @@ const GROUP_BAR_BORDER_COLOR = colors.GROUP_BAR_BORDER_COLOR; // C97108 with 80%
 
 const inputHeight = height * 0.055;
 
-const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername ,MOCK_USER_GROUPS_DB}) => {
+const CreateGroupScreen = ({ onBack, onCreateGroup, currentUsername, MOCK_USER_GROUPS_DB, navigation }) => {
   const [groupTitle, setGroupTitle] = useState('');
   const [selectedToken, setSelectedToken] = useState(TOKEN_OPTIONS[0]);
   const [customTokenAddress, setCustomTokenAddress] = useState('');
   const [isTokenModalVisible, setTokenModalVisible] = useState(false);
   const [memberUsernameInput, setMemberUsernameInput] = useState('');
-  const [members, setMembers] = useState([]); // Start with the creator as the first member
-console.log(MOCK_USER_GROUPS_DB)
+  const [members, setMembers] = useState([]);
+  const [groupId, setGroupId] = useState(''); // Add groupId state
+
   // Add creator to members list automatically on mount or when currentUsername is available
-  useState(() => {
+  useEffect(() => {
     if (currentUsername && !members.some(member => member.username === currentUsername)) {
       setMembers([{ username: currentUsername, id: Date.now().toString() }]);
     }
   }, [currentUsername]);
 
-
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (memberUsernameInput.trim() === '') {
       Alert.alert('Error', 'Please enter a username.');
       return;
@@ -56,8 +56,32 @@ console.log(MOCK_USER_GROUPS_DB)
       Alert.alert('Error', 'This member has already been added.');
       return;
     }
-    setMembers([...members, { username: memberUsernameInput.trim(), id: Date.now().toString() }]);
-    setMemberUsernameInput(''); // Clear input after adding
+    if (!groupId) {
+      Alert.alert('Error', 'Please create the group first before adding members.');
+      return;
+    }
+    try {
+      const response = await fetch('http://10.0.0.125:3000/api/users/add-to-group', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          caller: currentUsername,
+          groupId: groupId,
+          user: memberUsernameInput.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to add member to group');
+      }
+      setMembers([...members, { username: memberUsernameInput.trim(), id: Date.now().toString() }]);
+      setMemberUsernameInput('');
+      Alert.alert('Success', 'Member added to group successfully!');
+    } catch (error) {
+      Alert.alert('Error', `Failed to add member to group: ${error.message}`);
+    }
   };
 
   const handleRemoveMember = (idToRemove) => {
@@ -77,7 +101,7 @@ console.log(MOCK_USER_GROUPS_DB)
     }
   };
 
-  const handleSubmitCreateGroup = () => {
+  const handleSubmitCreateGroup = async () => {
     if (groupTitle.trim() === '') {
       Alert.alert('Error', 'Group title cannot be empty.');
       return;
@@ -87,8 +111,8 @@ console.log(MOCK_USER_GROUPS_DB)
       return;
     }
     if (members.length === 0) {
-        Alert.alert('Error', 'A group must have at least one member (the creator).');
-        return;
+      Alert.alert('Error', 'A group must have at least one member (the creator).');
+      return;
     }
 
     const groupData = {
@@ -97,7 +121,16 @@ console.log(MOCK_USER_GROUPS_DB)
       isCustomToken: selectedToken === 'Custom',
       members: members.map(m => m.username), // Send only usernames
     };
-    onCreateGroup(groupData); // Pass data to App.js handler
+    
+    try {
+      const result = await onCreateGroup(groupData);
+      if (result && result.groupId) {
+        setGroupId(result.groupId);
+        Alert.alert('Success', 'Group created successfully! You can now add members.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create group. Please try again.');
+    }
   };
 
   return (
@@ -114,8 +147,7 @@ console.log(MOCK_USER_GROUPS_DB)
         <TextInput
           style={[styles.inputBar, styles.textInput]}
           placeholder="Enter Group Name"
-         
-            placeholderTextColor="black"
+          placeholderTextColor="black"
           value={groupTitle}
           onChangeText={setGroupTitle}
         />
@@ -130,7 +162,7 @@ console.log(MOCK_USER_GROUPS_DB)
           <TextInput
             style={[styles.inputBar, styles.textInput, { marginTop: 10 }]}
             placeholder="Custom Token Name"
-              placeholderTextColor="black"
+            placeholderTextColor="black"
             value={customTokenAddress}
             onChangeText={setCustomTokenAddress}
             autoCapitalize="none"

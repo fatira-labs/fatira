@@ -345,6 +345,8 @@ const App = () => {
       members: groupData.members, // Ensure members array is included
     };
 
+    // TODO: LINK TO NEW CREATE GROUP ROUTE
+
     if (userPublicKey) {
       const updatedGroupsForUser = [...(MOCK_USER_GROUPS_DB[userPublicKey] || []), newGroup];
       MOCK_USER_GROUPS_DB[userPublicKey] = updatedGroupsForUser;
