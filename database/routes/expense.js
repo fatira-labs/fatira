@@ -1,25 +1,25 @@
 import express from "express";
 import Expense from "../Expense.js";
+import User from "../User.js";
 import { createUpdateBalancesTransaction } from "../utils/solana.js";
-
+import { Decimal128 } from "mongodb";
 
 const router = express.Router();
 
 router.post("/newExpense", async (req, res) => {
     try {
-        const {group, name, description, totalCost, payee, payers, amounts} = req.body;
+        const {group, name, description, totalCost, payee, payers: originalPayers, amounts: originalAmounts} = req.body;
 
         // Filter out zero amounts and their corresponding payers
-        const nonZeroIndices = amounts.map((amount, index) => ({ amount, index }))
+        const nonZeroIndices = originalAmounts.map((amount, index) => ({ amount, index }))
             .filter(item => item.amount > 0);
         
-        
-        if (payers.length === 0) {
+        if (nonZeroIndices.length === 0) {
             return res.status(400).json({message: "At least one payer must have a non-zero amount"});
         }
 
-        amounts = nonZeroIndices.map(item => item.amount);
-        payers = nonZeroIndices.map(item => payers[item.index]);
+        const amounts = nonZeroIndices.map(item => item.amount);
+        const payers = nonZeroIndices.map(item => originalPayers[item.index]);
 
         if (!group || !name || !description || !totalCost || !payee || !payers || !amounts) {
             return res.status(400).json({message: "Missing required fields"});
@@ -85,7 +85,6 @@ router.post("/newExpense", async (req, res) => {
             amounts: decimalAmounts
         });
         await newExpense.save();
-        // res.status(201).json({message: "Expense created successfully", expense: newExpense});
 
         try {
             const { transaction, backendPublicKey } = await createUpdateBalancesTransaction(

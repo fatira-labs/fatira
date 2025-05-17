@@ -76,3 +76,82 @@ export async function createUpdateBalancesTransaction(groupPublicKey, totalCost,
         throw error;
     }
 }
+
+export async function addUserToGroup(groupPublicKey, userPublicKey, callerPublicKey) {
+    try {
+        const backendKeypair = loadBackendKeypair();
+        const wallet = {
+            publicKey: backendKeypair.publicKey,
+            signTransaction: async (tx) => {
+                tx.partialSign(backendKeypair);
+                return tx;
+            }
+        };
+        const provider = new AnchorProvider(
+            Connection,
+            wallet,
+            { commitment: 'confirmed' }
+        );
+        const program = new Program(IDL, PROGRAM_ID, provider);
+        const groupPubkey = new PublicKey(groupPublicKey);
+        const userPubkey = new PublicKey(userPublicKey);
+        const callerPubkey = new PublicKey(callerPublicKey);
+
+        const tx = await program.methods
+            .add_user(userPubkey)
+            .accounts({
+                group: groupPubkey,
+                payer: callerPubkey,
+            }).transaction();
+
+        const { blockhash } = await Connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.feePayer = callerPubkey;
+        tx.partialSign(backendKeypair);
+
+        const serializedTx = tx.serialize({
+            requireAllSignatures: false,
+            verifySignatures: true,
+        });
+
+        const base64Tx = serializedTx.toString('base64');
+
+        return {
+            transaction: base64Tx,
+            backendPublicKey: backendKeypair.publicKey.toString()
+        };
+    } catch (error) {
+        console.error('Error adding user to group:', error);
+        throw error;
+    }
+}
+
+export async function isGroupAdmin(groupPublicKey, userPublicKey) { 
+    try {
+        const backendKeypair = loadBackendKeypair();
+        const wallet = {
+            publicKey: backendKeypair.publicKey,
+            signTransaction: async (tx) => {
+                tx.partialSign(backendKeypair);
+                return tx;
+            }
+        };
+        const provider = new AnchorProvider(
+            Connection,
+            wallet,
+            { commitment: 'confirmed' }
+        );
+        const program = new Program(IDL, PROGRAM_ID, provider);
+        const groupPubkey = new PublicKey(groupPublicKey);
+        const userPubkey = new PublicKey(userPublicKey);
+
+        const groupAccount = await program.account.group.fetch(groupPubkey);
+
+        return groupAccount.balances.length > 0 && 
+            groupAccount.balances[0].owner.toString() === userPublicKey;
+
+    } catch (error) {
+        console.error('Error checking if user is group admin:', error);
+        throw error;
+    }
+}
