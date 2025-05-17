@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 
-
+import AntDesign from '@expo/vector-icons/AntDesign';
+import { Entypo } from '@expo/vector-icons';
 // Get screen dimensions for responsive design
 const { width, height } = Dimensions.get('window');
 
@@ -32,13 +33,46 @@ const GroupsScreen = ({ username, userGroups, onLogout, onAddGroup, onSelectGrou
       <ScrollView style={styles.groupsListContainer} contentContainerStyle={styles.groupsListContentContainer}>
         {userGroups && userGroups.length > 0 ? (
           userGroups.map((group) => ( // Changed from (group, index) to (group)
-            <TouchableOpacity
-              key={group.id || group.name} // Use group.id for key if available, otherwise fallback to name
-              style={styles.groupBar}
-              onPress={() => onSelectGroup(group)} // Call onSelectGroup with the specific group data
-            >
-              <Text style={styles.groupBarText}>{group.name}</Text>
-            </TouchableOpacity>
+           <TouchableOpacity onPress={() => onSelectGroup(group)} key={group.id || group.name} style={styles.groupBar}>
+  <Text style={styles.groupBarText}>{group.name}</Text>
+  <View style={styles.iconRow}>
+    <AntDesign
+      name="checkcircle"
+      size={35}
+      color="#388E3C"
+      onPress={() => Alert.alert("Accept group request", "Are you sure you want to accept this group request?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Accept",
+          onPress: () => {
+            // ACCEPT group request logic here
+          },
+        },
+      ])}
+    />
+    <Entypo
+      name="circle-with-cross"
+      size={35}
+      color="#D32F2F"
+      onPress={() => Alert.alert("Deny group request", "Are you sure you want to accept this group request?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Accept",
+          onPress: () => {
+            // deny group request logic here
+          },
+        },
+      ])}
+      style={{ marginLeft: 12 }}
+    />
+  </View>
+</TouchableOpacity>
           ))
         ) : (
           <Text style={styles.noGroupsText}>You are not part of any groups yet. Tap '+' to create or join one!</Text>
@@ -106,25 +140,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0A829',
     borderColor: '#C97108',
     borderWidth: 3,
-    borderRadius: 12, // Slightly more rounded
-    paddingVertical: height * 0.022, // Slightly taller bars
-    paddingHorizontal: width * 0.05, // More horizontal padding
-    marginBottom: height * 0.018, // Slightly more space
+    borderRadius: 12,
+    paddingVertical: height * 0.022,
+    paddingHorizontal: width * 0.05,
+    marginBottom: height * 0.018,
+
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: "#000", // Adding a subtle shadow for depth
-    shadowOffset: {
-        width: 0,
-        height: 2,
-    },
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
+    justifyContent: 'space-between',  // ← spread text and icons
     elevation: 4,
+  },
+  groupBarText: {
+    color: '#2C1E0A',
+    fontSize: width * 0.048,
+    fontWeight: 'bold',
+    flex: 1,                           // ← take up all left space
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   groupBarText: {
     color: '#2C1E0A', // Darker brown for better readability on orange
     fontSize: width * 0.048, // Slightly larger text
     fontWeight: 'bold',
+    textAlign:'center',
+    alignSelf:'center',
+    marginLeft:100,
+    
   },
   noGroupsText: {
     color: '#B0B0B0', // Lighter grey
