@@ -8,6 +8,9 @@ skip-lint = false
 [programs.localnet]
 fatira = "ftra545Ysk9H9HjvhfqXh5xP5PTQTC1KV3rk4AADXeC"
 
+[programs.devnet]
+fatira = "ftra545Ysk9H9HjvhfqXh5xP5PTQTC1KV3rk4AADXeC"
+
 [registry]
 url = "https://api.apr.dev"
 
