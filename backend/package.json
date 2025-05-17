@@ -3,24 +3,23 @@
     "version": "1.0.0",
     "description": "",
     "main": "index.ts",
-    "scripts":
-    {
+    "scripts": {
         "build": "tsc",
         "start": "node build/index.js"
     },
     "type": "module",
-    "keywords":
-    [],
+    "keywords": [],
     "author": "",
     "license": "ISC",
-    "dependencies":
-    {
+    "dependencies": {
+        "@coral-xyz/anchor": "^0.31.1",
+        "@solana/spl-token": "^0.4.13",
+        "@solana/web3.js": "^1.98.2",
         "cors": "^2.8.5",
         "express": "^5.1.0",
-        "mongoose": "^8.14.0"
+        "mongoose": "^4.13.21"
     },
-    "devDependencies":
-    {
+    "devDependencies": {
         "nodemon": "^3.1.10"
     }
 }

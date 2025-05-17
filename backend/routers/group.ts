@@ -1,16 +1,22 @@
 import express from "express";
-import * as anchor from "@coral-xyz/anchor";
-import { Keypair, SystemProgram, Transaction, Connection } from "@solana/web3.js"
+import { Wallet, AnchorProvider, setProvider, Program } from "@coral-xyz/anchor";
+import { Keypair, PublicKey, SystemProgram, Transaction, Connection } from "@solana/web3.js"
 import { createInitializeAccountInstruction, getMinimumBalanceForRentExemptAccount } from "@solana/spl-token";
-import { IDL } from '../../program/target/idl/fatira.json';
+import Group from "../models/Group";
+import config from "../config";
+import os from "os";
+import fs from "fs";
+
 let router = express.Router();
 
-let connection = new Connection(process.env.RPC_URL);
-let admin = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync("../../../admin-keypair.json"))));
-let wallet = new anchor.Wallet(admin);
-let provider = new anchor.AnchorProvider(connection, wallet, { preflightCommitment: "confirmed" });
+let connection = new Connection(config.solana.rpc);
+let admin = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(`${os.homedir()}/admnewKmeGHkU1ZM8kKaPfunvV4GPmZUAfQ48zNA6fL.json`, "utf8"))));
+let wallet = new Wallet(admin);
+let provider = new AnchorProvider(connection, wallet, {});
+setProvider(provider);
 let programId = new PublicKey("ftra545Ysk9H9HjvhfqXh5xP5PTQTC1KV3rk4AADXeC");
-let program = new anchor.Program(idl, programId, provider);
+let idl = JSON.parse(fs.readFileSync("../../program/target/idl/fatira.json", "utf8"));
+let program = new Program(idl, { connection });
 
 router.post("/create", async (req, res) => {
 	const { user, name, currency, tokenProgram } = req.body;
@@ -24,7 +30,7 @@ router.post("/create", async (req, res) => {
 	let { blockhash } = await connection.getLatestBlockhash("finalized");
 	transaction.recentBlockhash = blockhash;
 	transaction.feePayer = new PublicKey(user);
-	
+
 	transaction.add(
 		SystemProgram.createAccount({
 			fromPubkey: new PublicKey(user),
@@ -34,7 +40,7 @@ router.post("/create", async (req, res) => {
 			programId: new PublicKey(tokenProgram)
 		}),
 		createInitializeAccountInstruction(escrow.publicKey, new PublicKey(currency), escrowAuthority, new PublicKey(tokenProgram)),
-		program.methods.createGroup().accounts({
+		await program.methods.createGroup().accounts({
 			group: group.publicKey,
 			payer: new PublicKey(user),
 			currency: new PublicKey(currency),
@@ -54,3 +60,5 @@ router.post("/create", async (req, res) => {
 		transaction: transaction.serialize({requireAllSignatures: false}).toString("base64")
 	});
 });
+
+export default router;

@@ -1,11 +1,10 @@
-import { Schema, model } from 'mongoose'
+import mongoose from '../db';
 
-const userSchema = new Schema({
-    owner: String, // address
-    name: String,
-    username: String,
-    groups: [String], // group ids
-});
-
-const User = model('User', userSchema);
-export default User;
+export default mongoose.model(
+    "User",
+    new mongoose.Schema({
+        owner: String,
+        name: String,
+        username: String
+    })
+);

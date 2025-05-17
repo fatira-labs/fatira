@@ -1,9 +1,9 @@
-import { Schema, model } from 'mongoose'
+import mongoose from '../db';
 
-const groupSchema = new Schema({
-    id: String,
-    name: String
-});
-
-const Group = model('Group', groupSchema);
-export default Group;
+export default mongoose.model(
+    "Group",
+    new mongoose.Schema({
+        id: String,
+        name: String
+    })
+);
